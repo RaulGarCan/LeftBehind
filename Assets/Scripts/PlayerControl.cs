@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,17 +7,20 @@ public class PlayerControl : MonoBehaviour
 {
     private Rigidbody2D rigPlayer;
     private SpriteRenderer spritePlayer;
+    private Animator animPlayer;
     public int playerSpeed;
     public int playerJumpForce;
     private void Start()
     {
         rigPlayer = GetComponent<Rigidbody2D>();
         spritePlayer = GetComponent<SpriteRenderer>();
+        animPlayer = GetComponent<Animator>();
     }
     private void Update()
     {
         FlipSpritePlayer();
         JumpPlayer();
+        animPlayer.SetFloat("VelocityAbsX", Math.Abs(rigPlayer.velocity.x));
     }
     private void FixedUpdate()
     {
