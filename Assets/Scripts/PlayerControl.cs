@@ -9,18 +9,28 @@ public class PlayerControl : MonoBehaviour
     private SpriteRenderer spritePlayer;
     private Animator animPlayer;
     public int playerSpeed;
+    public GameObject deathMenu;
+    public GameObject bullet;
     public int playerJumpForce;
+    public int maxHealth;
+    private int health;
+    private bool isVulnerable;
     private void Start()
     {
+        Time.timeScale = 1f;
         rigPlayer = GetComponent<Rigidbody2D>();
         spritePlayer = GetComponent<SpriteRenderer>();
         animPlayer = GetComponent<Animator>();
+        health = maxHealth;
+        isVulnerable = true;
     }
     private void Update()
     {
         FlipSpritePlayer();
         JumpPlayer();
         animPlayer.SetFloat("VelocityAbsX", Math.Abs(rigPlayer.velocity.x));
+        animPlayer.SetFloat("VelocityY", rigPlayer.velocity.y);
+        ShootPlayer();
     }
     private void FixedUpdate()
     {
@@ -59,5 +69,41 @@ public class PlayerControl : MonoBehaviour
             return true;
         }
         return false;
+    }
+    public void HurtPlayer(int damage)
+    {
+        if (isVulnerable)
+        {
+            Debug.Log("PlayerHealth: "+health);
+            health-=damage;
+            MakeInvunerable();
+            Invoke("MakeVulnerable", 1f);
+            if (health<=0)
+            {
+                DeathPlayer();
+            }
+        }
+    }
+    private void MakeInvunerable()
+    {
+        spritePlayer.color = Color.red;
+        isVulnerable = false;
+    }
+    private void MakeVulnerable()
+    {
+        spritePlayer.color = Color.white;
+        isVulnerable = true;
+    }
+    private void DeathPlayer()
+    {
+        Time.timeScale = 0f;
+        deathMenu.SetActive(true);
+    }
+    private void ShootPlayer()
+    {
+        if (UnityEngine.Input.GetKeyDown(KeyCode.Space))
+        {
+            Instantiate(bullet, transform);
+        }
     }
 }

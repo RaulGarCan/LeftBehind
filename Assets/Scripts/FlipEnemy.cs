@@ -9,13 +9,13 @@ public class FlipEnemy : MonoBehaviour
     private void Start()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
-        lastPositionX = transform.parent.position.x;
+        lastPositionX = transform.position.x;
     }
     private void Update()
     {
-        if (lastPositionX - transform.parent.position.x > 0) spriteRenderer.flipX = false;
+        if (lastPositionX - transform.position.x > 0) spriteRenderer.flipX = false;
         else spriteRenderer.flipX = true;
 
-        lastPositionX = transform.parent.position.x;
+        lastPositionX = transform.position.x;
     }
 }
