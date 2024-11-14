@@ -9,7 +9,7 @@ public class BlobControl : MonoBehaviour
     public int finalPosX;
     private Vector3 startPos;
     private Vector3 endPos;
-    public int damage;
+    public int damage, radAmount;
     private void Start()
     {
         startPos = transform.position;
@@ -38,7 +38,7 @@ public class BlobControl : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            collision.gameObject.GetComponent<PlayerControl>().HurtPlayer(damage);
+            collision.gameObject.GetComponent<PlayerControl>().HurtPlayer(damage, radAmount);
         }
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class PlayerControl : MonoBehaviour
@@ -8,13 +9,12 @@ public class PlayerControl : MonoBehaviour
     private Rigidbody2D rigPlayer;
     private SpriteRenderer spritePlayer;
     private Animator animPlayer;
-    public int playerSpeed;
-    public GameObject deathMenu;
-    public GameObject bullet;
-    public int playerJumpForce;
-    public int maxHealth;
-    private int health;
+    public GameObject deathMenu, bullet, HUD;
+    private HUDControl hudControl;
+    public int playerJumpForce, playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
+    private int health, hunger, radiation, remainingAmmo, magazineAmmo;
     private bool isVulnerable;
+    private float lastTimeShoot, lastTimeHunger, lastTimeRad;
     private void Start()
     {
         Time.timeScale = 1f;
@@ -22,7 +22,15 @@ public class PlayerControl : MonoBehaviour
         spritePlayer = GetComponent<SpriteRenderer>();
         animPlayer = GetComponent<Animator>();
         health = maxHealth;
+        hunger = maxHunger;
+        radiation = maxRadiation;
+        remainingAmmo = maxAmmo;
+        magazineAmmo = maxMagAmmo;
         isVulnerable = true;
+        hudControl = HUD.GetComponent<HUDControl>();
+        lastTimeShoot = Time.time;
+
+        UpdateHUDInfo();
     }
     private void Update()
     {
@@ -31,6 +39,16 @@ public class PlayerControl : MonoBehaviour
         animPlayer.SetFloat("VelocityAbsX", Math.Abs(rigPlayer.velocity.x));
         animPlayer.SetFloat("VelocityY", rigPlayer.velocity.y);
         ShootPlayer();
+        ReloadGunPlayer();
+        UpdateHUDInfo();
+        if (radiation<=0 && Time.time>lastTimeRad+1f)
+        {
+            ReduceHealthPlayer();
+        }
+        if (hunger<=0 && Time.time > lastTimeHunger + 1f)
+        {
+            ReduceHealthPlayer();
+        }
     }
     private void FixedUpdate()
     {
@@ -70,10 +88,11 @@ public class PlayerControl : MonoBehaviour
         }
         return false;
     }
-    public void HurtPlayer(int damage)
+    public void HurtPlayer(int damage, int rad)
     {
         if (isVulnerable)
         {
+            ReduceRadiationPlayer(rad);
             Debug.Log("PlayerHealth: "+health);
             health-=damage;
             MakeInvunerable();
@@ -101,9 +120,59 @@ public class PlayerControl : MonoBehaviour
     }
     private void ShootPlayer()
     {
-        if (UnityEngine.Input.GetKeyDown(KeyCode.Space))
+        if (UnityEngine.Input.GetKeyDown(KeyCode.Mouse0) && magazineAmmo>0 && Time.time > lastTimeShoot+0.3f)
         {
             Instantiate(bullet, transform);
+            magazineAmmo--;
+            lastTimeShoot = Time.time;
         }
+    }
+    private void ReloadGunPlayer()
+    {
+        if (UnityEngine.Input.GetKeyDown(KeyCode.R) && magazineAmmo<maxMagAmmo)
+        {
+            for (int i = 0; i < remainingAmmo; i++)
+            {
+                magazineAmmo++;
+                remainingAmmo--;
+                if (magazineAmmo>=maxMagAmmo)
+                {
+                    return;
+                }
+            }
+        }
+    }
+    private void UpdateHUDInfo()
+    {
+        hudControl.SetAmmoHUD(magazineAmmo);
+        hudControl.SetHealthHUD(health);
+        hudControl.SetHungerHUD(hunger);
+        hudControl.SetRemAmmoHUD(remainingAmmo);
+        hudControl.SetRadHUD(radiation);
+    }
+    public void ReduceRadiationPlayer(int radAmount)
+    {
+        if (radiation-radAmount>0)
+        {
+            radiation -= radAmount;
+        } else
+        {
+            radiation = 0;
+        }
+    }
+    public void ReduceHungerPlayer(int hungerAmount)
+    {
+        if (hunger - hungerAmount > 0)
+        {
+            hunger -= hungerAmount;
+        }
+        else
+        {
+            radiation = 0;
+        }
+    }
+    private void ReduceHealthPlayer()
+    {
+        health--;
     }
 }

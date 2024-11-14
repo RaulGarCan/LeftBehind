@@ -10,11 +10,11 @@ public class BulletControl : MonoBehaviour
     private void Start()
     {
         player = transform.parent.gameObject;
-        transform.position = player.transform.position;
+        transform.position = new Vector3(player.transform.position.x, player.transform.position.y+0.5f, player.transform.position.z);
         endPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Debug.Log("EndPos: " + endPos);
-        if (player.GetComponent<SpriteRenderer>().flipX) transform.position.Set(transform.position.x+5, transform.position.y, transform.position.z);
-        else transform.position.Set(transform.position.x - 5, transform.position.y, transform.position.z);
+        if (player.GetComponent<SpriteRenderer>().flipX) transform.position = new Vector3(transform.position.x-1, transform.position.y, transform.position.z);
+        else transform.position = new Vector3(transform.position.x + 1, transform.position.y, transform.position.z);
 
         Invoke("DestroyBullet", 5f);
     }
@@ -33,6 +33,9 @@ public class BulletControl : MonoBehaviour
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        DestroyBullet();
+        if (!collision.CompareTag("Player"))
+        {
+            DestroyBullet();
+        }
     }
 }
