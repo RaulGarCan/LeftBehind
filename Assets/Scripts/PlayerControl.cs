@@ -12,9 +12,10 @@ public class PlayerControl : MonoBehaviour
     public GameObject deathMenu, bullet, HUD;
     private HUDControl hudControl;
     public int playerJumpForce, playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
-    private int health, hunger, radiation, remainingAmmo, magazineAmmo;
-    private bool isVulnerable;
+    private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier;
+    private bool isVulnerable, isReloading, isHungry;
     private float lastTimeShoot, lastTimeHunger, lastTimeRad;
+    private string ammoString;
     private void Start()
     {
         Time.timeScale = 1f;
@@ -29,6 +30,11 @@ public class PlayerControl : MonoBehaviour
         isVulnerable = true;
         hudControl = HUD.GetComponent<HUDControl>();
         lastTimeShoot = Time.time;
+        isReloading = false;
+        playerSpeedOrig = playerSpeed;
+        ammoString = magazineAmmo.ToString();
+        hungerMultiplier = 5;
+        isHungry = true;
 
         UpdateHUDInfo();
     }
@@ -49,6 +55,10 @@ public class PlayerControl : MonoBehaviour
         {
             ReduceHealthPlayer();
         }
+        if(isHungry){
+            isHungry = false;
+            Invoke("ReduceHungerPlayer", 4f);
+        }
     }
     private void FixedUpdate()
     {
@@ -62,7 +72,7 @@ public class PlayerControl : MonoBehaviour
     }
     private void JumpPlayer()
     {
-        if (UnityEngine.Input.GetKeyDown(KeyCode.W) && (TouchFloor()))
+        if (UnityEngine.Input.GetKeyDown(KeyCode.W) && TouchFloor() && !isReloading)
         {
             rigPlayer.AddForce(Vector2.up * playerJumpForce, ForceMode2D.Impulse);
         }
@@ -120,35 +130,48 @@ public class PlayerControl : MonoBehaviour
     }
     private void ShootPlayer()
     {
-        if (UnityEngine.Input.GetKeyDown(KeyCode.Mouse0) && magazineAmmo>0 && Time.time > lastTimeShoot+0.3f)
+        if (TouchFloor() && UnityEngine.Input.GetKeyDown(KeyCode.Mouse0) && magazineAmmo>0 && Time.time > lastTimeShoot+0.3f && !isReloading)
         {
             Instantiate(bullet, transform);
             magazineAmmo--;
             lastTimeShoot = Time.time;
+            ammoString = magazineAmmo.ToString();
         }
     }
     private void ReloadGunPlayer()
     {
-        if (UnityEngine.Input.GetKeyDown(KeyCode.R) && magazineAmmo<maxMagAmmo)
+        if (UnityEngine.Input.GetKeyDown(KeyCode.R) && magazineAmmo<maxMagAmmo && !isReloading && remainingAmmo>0)
         {
-            for (int i = 0; i < remainingAmmo; i++)
-            {
-                magazineAmmo++;
-                remainingAmmo--;
-                if (magazineAmmo>=maxMagAmmo)
-                {
-                    return;
-                }
-            }
+            isReloading = true;
+            playerSpeed /= 2;
+            ammoString = "??";
+            Invoke("RefillGun",2.5f);
         }
+    }
+    public void RefillGun(){
+        int neededAmmo = maxMagAmmo-magazineAmmo;
+        isReloading = false;
+        playerSpeed = playerSpeedOrig;
+
+        if(remainingAmmo>=neededAmmo)
+        {
+            magazineAmmo += neededAmmo;
+            remainingAmmo-= neededAmmo;
+        } else {
+            magazineAmmo += remainingAmmo;
+            remainingAmmo = 0;
+        }
+
+        ammoString = magazineAmmo.ToString();
     }
     private void UpdateHUDInfo()
     {
-        hudControl.SetAmmoHUD(magazineAmmo);
+        hudControl.SetAmmoHUD(ammoString);
         hudControl.SetHealthHUD(health);
         hudControl.SetHungerHUD(hunger);
         hudControl.SetRemAmmoHUD(remainingAmmo);
         hudControl.SetRadHUD(radiation);
+        hudControl.SetTimerHUD((int)Time.time/60, (int)Time.time%60);
     }
     public void ReduceRadiationPlayer(int radAmount)
     {
@@ -160,16 +183,10 @@ public class PlayerControl : MonoBehaviour
             radiation = 0;
         }
     }
-    public void ReduceHungerPlayer(int hungerAmount)
+    public void ReduceHungerPlayer()
     {
-        if (hunger - hungerAmount > 0)
-        {
-            hunger -= hungerAmount;
-        }
-        else
-        {
-            radiation = 0;
-        }
+        isHungry = true;
+        hunger-=hungerMultiplier;
     }
     private void ReduceHealthPlayer()
     {

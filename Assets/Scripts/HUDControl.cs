@@ -2,37 +2,39 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class HUDControl : MonoBehaviour
 {
-    public GameObject hungerHUD, healthHUD, ammoHUD, remAmmoHUD, radHUD;
-    private TMP_Text hungerText, healthText, ammoText, remAmmoText, radText;
+    public GameObject hungerHUD, healthHUD, ammoHUD, remAmmoHUD, radHUD, timerHUD;
+    private TMP_Text ammoText, remAmmoText, timerText;
     private void Start()
     {
-        hungerText = hungerHUD.GetComponent<TMP_Text>();
-        healthText = healthHUD.GetComponent<TMP_Text>();
         ammoText = ammoHUD.GetComponent<TMP_Text>();
         remAmmoText = remAmmoHUD.GetComponent<TMP_Text>();
-        radText = radHUD.GetComponent<TMP_Text>();
+        timerText = timerHUD.GetComponent<TMP_Text>();
     }
     public void SetHungerHUD(int hunger)
     {
-        hungerText.text = hunger.ToString();
+        hungerHUD.GetComponent<Image>().fillAmount = (float)hunger/100;
     }
     public void SetHealthHUD(int health)
     {
-        healthText.text = health.ToString();
+        healthHUD.GetComponent<Image>().fillAmount = (float)health/100;
     }
-    public void SetAmmoHUD(int ammo)
+    public void SetRadHUD(int rad)
     {
-        ammoText.text = ammo.ToString();
+        radHUD.GetComponent<Image>().fillAmount = (float)rad/100;
+    }
+    public void SetAmmoHUD(string ammo)
+    {
+        ammoText.text = ammo;
     }
     public void SetRemAmmoHUD(int remAmmo) 
     { 
         remAmmoText.text = remAmmo.ToString();
     }
-    public void SetRadHUD(int rad)
-    {
-        radText.text = rad.ToString();
+    public void SetTimerHUD(int min, int sec){
+        timerText.text = min.ToString("00") +":"+ sec.ToString("00");
     }
 }
