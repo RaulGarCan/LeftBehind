@@ -6,13 +6,16 @@ using UnityEngine.UI;
 
 public class HUDControl : MonoBehaviour
 {
-    public GameObject hungerHUD, healthHUD, ammoHUD, remAmmoHUD, radHUD, timerHUD;
-    private TMP_Text ammoText, remAmmoText, timerText;
+    public GameObject hungerHUD, healthHUD, ammoHUD, remAmmoHUD, radHUD, timerHUD, medkitHUD, foodHUD, scoreHUD;
+    private TMP_Text ammoText, remAmmoText, timerText, itemMedkitText, itemFoodText, scoreText;
     private void Start()
     {
         ammoText = ammoHUD.GetComponent<TMP_Text>();
         remAmmoText = remAmmoHUD.GetComponent<TMP_Text>();
         timerText = timerHUD.GetComponent<TMP_Text>();
+        itemMedkitText = medkitHUD.GetComponent<TMP_Text>();
+        itemFoodText = foodHUD.GetComponent<TMP_Text>();
+        scoreText = scoreHUD.GetComponent<TMP_Text>();
     }
     public void SetHungerHUD(int hunger)
     {
@@ -36,5 +39,17 @@ public class HUDControl : MonoBehaviour
     }
     public void SetTimerHUD(int min, int sec){
         timerText.text = min.ToString("00") +":"+ sec.ToString("00");
+    }
+    public void SetMedkitHUD(int amount)
+    {
+        itemMedkitText.text = amount.ToString();
+    }
+    public void SetFoodHUD(int amount)
+    {
+        itemFoodText.text = amount.ToString();
+    }
+    public void SetScoreHUD(int score)
+    {
+        scoreText.text = score.ToString();
     }
 }

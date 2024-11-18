@@ -12,8 +12,8 @@ public class PlayerControl : MonoBehaviour
     public GameObject deathMenu, bullet, HUD;
     private HUDControl hudControl;
     public int playerJumpForce, playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
-    private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier;
-    private bool isVulnerable, isReloading, isHungry;
+    private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer;
+    private bool isVulnerable, isReloading, isHungry, isRadiating;
     private float lastTimeShoot, lastTimeHunger, lastTimeRad;
     private string ammoString;
     private void Start()
@@ -35,6 +35,8 @@ public class PlayerControl : MonoBehaviour
         ammoString = magazineAmmo.ToString();
         hungerMultiplier = 5;
         isHungry = true;
+        itemMedkit = 0;
+        itemFood = 0;
 
         UpdateHUDInfo();
     }
@@ -47,8 +49,9 @@ public class PlayerControl : MonoBehaviour
         ShootPlayer();
         ReloadGunPlayer();
         UpdateHUDInfo();
-        if (radiation<=0 && Time.time>lastTimeRad+1f)
+        if (radiation<=0 && Time.time>lastTimeRad + 1f)
         {
+            lastTimeRad = Time.time;
             ReduceHealthPlayer();
         }
         if (hunger<=0 && Time.time > lastTimeHunger + 1f)
@@ -57,8 +60,10 @@ public class PlayerControl : MonoBehaviour
         }
         if(isHungry){
             isHungry = false;
-            Invoke("ReduceHungerPlayer", 4f);
+            Invoke("ReduceHungerPlayer", 1f);
         }
+        EatFoodPlayer();
+        UseMedKitPlayer();
     }
     private void FixedUpdate()
     {
@@ -106,7 +111,7 @@ public class PlayerControl : MonoBehaviour
             Debug.Log("PlayerHealth: "+health);
             health-=damage;
             MakeInvunerable();
-            Invoke("MakeVulnerable", 1f);
+            Invoke("MakeVulnerable", 4f);
             if (health<=0)
             {
                 DeathPlayer();
@@ -140,7 +145,7 @@ public class PlayerControl : MonoBehaviour
     }
     private void ReloadGunPlayer()
     {
-        if (UnityEngine.Input.GetKeyDown(KeyCode.R) && magazineAmmo<maxMagAmmo && !isReloading && remainingAmmo>0)
+        if (UnityEngine.Input.GetKeyDown(KeyCode.R) && magazineAmmo<maxMagAmmo && !isReloading && remainingAmmo>0 && TouchFloor())
         {
             isReloading = true;
             playerSpeed /= 2;
@@ -172,6 +177,9 @@ public class PlayerControl : MonoBehaviour
         hudControl.SetRemAmmoHUD(remainingAmmo);
         hudControl.SetRadHUD(radiation);
         hudControl.SetTimerHUD((int)Time.time/60, (int)Time.time%60);
+        hudControl.SetFoodHUD(itemFood);
+        hudControl.SetMedkitHUD(itemMedkit);
+        hudControl.SetScoreHUD(scorePlayer);
     }
     public void ReduceRadiationPlayer(int radAmount)
     {
@@ -186,10 +194,74 @@ public class PlayerControl : MonoBehaviour
     public void ReduceHungerPlayer()
     {
         isHungry = true;
-        hunger-=hungerMultiplier;
+        if (hunger-hungerMultiplier>0)
+        {
+            hunger -= hungerMultiplier;
+        } else
+        {
+            hunger = 0;
+        }
+        lastTimeHunger = Time.time;
     }
     private void ReduceHealthPlayer()
     {
         health--;
+    }
+    public void PickupFoodCan(int addScore)
+    {
+        itemFood++;
+        scorePlayer += addScore;
+    }
+    public void PickupMedKit(int addScore)
+    {
+        itemMedkit++;
+        scorePlayer += addScore;
+    }
+    public void PickupAmmo(int addAmmo)
+    {
+        if (remainingAmmo+addAmmo > maxAmmo)
+        {
+            remainingAmmo = maxAmmo;
+        } else
+        {
+            remainingAmmo += addAmmo;
+        }
+    }
+    public void EatFoodPlayer()
+    {
+        if (itemFood>0 && UnityEngine.Input.GetKeyDown(KeyCode.Q) && hunger<maxHunger)
+        {
+            itemFood--;
+            GiveFoodPlayer(25);
+        }
+    }
+    public void UseMedKitPlayer()
+    {
+        if (itemMedkit>0 && UnityEngine.Input.GetKeyDown(KeyCode.F) && health<maxHealth)
+        {
+            itemMedkit--;
+            HealPlayer(25);
+        }
+    }
+    private void HealPlayer(int healAmount)
+    {
+        if (health+healAmount > maxHealth)
+        {
+            health = maxHealth;
+        } else
+        {
+            health += healAmount;
+        }
+    }
+    private void GiveFoodPlayer(int foodAmount)
+    {
+        if (hunger + foodAmount > maxHunger)
+        {
+            hunger = maxHunger;
+        }
+        else
+        {
+            hunger += foodAmount;
+        }
     }
 }

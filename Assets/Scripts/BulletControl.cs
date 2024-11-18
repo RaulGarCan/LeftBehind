@@ -11,7 +11,7 @@ public class BulletControl : MonoBehaviour
     {
         player = transform.parent.gameObject;
         transform.position = new Vector3(player.transform.position.x, player.transform.position.y+0.5f, player.transform.position.z);
-        bulletDir = Camera.main.ScreenToWorldPoint(Input.mousePosition)-transform.position;
+        bulletDir = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         endPos = bulletDir;
         Debug.Log("EndPos: " + endPos);
         if (player.GetComponent<SpriteRenderer>().flipX) transform.position = new Vector3(transform.position.x-1, transform.position.y, transform.position.z);
