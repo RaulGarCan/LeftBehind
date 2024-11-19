@@ -7,21 +7,31 @@ public class BulletControl : MonoBehaviour
     public float speed;
     private GameObject player;
     private Vector3 endPos, bulletDir;
+    private Rigidbody2D rb;
     private void Start()
     {
+        rb = GetComponent<Rigidbody2D>();
         player = transform.parent.gameObject;
         transform.position = new Vector3(player.transform.position.x, player.transform.position.y+0.5f, player.transform.position.z);
         bulletDir = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         endPos = bulletDir;
         Debug.Log("EndPos: " + endPos);
+        
         if (player.GetComponent<SpriteRenderer>().flipX) transform.position = new Vector3(transform.position.x-1, transform.position.y, transform.position.z);
         else transform.position = new Vector3(transform.position.x + 1, transform.position.y, transform.position.z);
+
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector3 direction = mousePos - transform.position;
+        Vector3 rotation = transform.position - mousePos;
+        float rot = Mathf.Atan2(rotation.x, rotation.y) * Mathf.Rad2Deg;
+        transform.rotation = Quaternion.Euler(0, 0, rot + 90);
+        rb.velocity = new Vector2(direction.x, direction.y).normalized * speed;
 
         Invoke("DestroyBullet", 5f);
     }
     private void Update()
     {
-        MoveBullet();
+        //MoveBullet();
         //Debug.Log("BulletPos: "+transform.position);
     }
     public void DestroyBullet()
@@ -34,7 +44,7 @@ public class BulletControl : MonoBehaviour
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (!collision.CompareTag("Player"))
+        if (!collision.CompareTag("Player") && !collision.CompareTag("Item"))
         {
             DestroyBullet();
         }

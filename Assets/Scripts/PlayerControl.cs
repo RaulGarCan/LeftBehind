@@ -16,6 +16,9 @@ public class PlayerControl : MonoBehaviour
     private bool isVulnerable, isReloading, isHungry, isRadiating;
     private float lastTimeShoot, lastTimeHunger, lastTimeRad;
     private string ammoString;
+    private float dashEndPos;
+    private bool isDashing, canMove;
+    private float lastTimeDash;
     private void Start()
     {
         Time.timeScale = 1f;
@@ -37,6 +40,10 @@ public class PlayerControl : MonoBehaviour
         isHungry = true;
         itemMedkit = 0;
         itemFood = 0;
+
+        dashEndPos = transform.position.x;
+        isDashing = false;
+        canMove = true;
 
         UpdateHUDInfo();
     }
@@ -60,17 +67,64 @@ public class PlayerControl : MonoBehaviour
         }
         if(isHungry){
             isHungry = false;
-            Invoke("ReduceHungerPlayer", 1f);
+            Invoke("ReduceHungerPlayer", 4f);
         }
         EatFoodPlayer();
         UseMedKitPlayer();
+
+        //Dash(25f);
     }
+    /*
+    private void Dash(float dashDistance)
+    {
+        // Calcula la direccion del dash en base a la orientacion del jugador
+        int dashDir;
+        if (spritePlayer.flipX)
+        {
+            dashDir = -1;
+        } else
+        {
+            dashDir = 1;
+        }
+
+        // Calcula la posicion final del dash, desactiva el movimiento e impide que se vuelva a invocar el metodo Dash
+        if (Input.GetKeyDown(KeyCode.Mouse1) && Time.time>lastTimeDash+1f)
+        {
+            dashEndPos = dashDir * (Math.Abs(transform.position.x) + dashDistance);
+            isDashing = true;
+            canMove = false;
+            lastTimeDash = Time.time;
+            // Reactiva el movimiento y desactiva el estado dash tras 0.2 segundos
+            Invoke("PlayerCanMove", 0.2f);
+        }
+        // Llama al metodo encargado del propio movimiento del jugador
+        DashMovement(dashDistance);
+    }
+    private void DashMovement(float dashSpeed)
+    {
+        if (isDashing)
+        {
+            // Desplaza el jugador hacia la posicion x desde la que iniciaba + la distancia del dash que le indicamos
+            transform.position = Vector3.MoveTowards(transform.position, new Vector3(dashEndPos, transform.position.y, transform.position.z), dashSpeed * Time.deltaTime);
+        }
+    }
+    public void PlayerCanMove()
+    {
+        isDashing = false;
+        canMove = true;
+    }
+     */
     private void FixedUpdate()
     {
         MovementPlayer();
     }
     private void MovementPlayer()
     {
+        if (!canMove)
+        {
+            return;
+        }
+
         float inputX = UnityEngine.Input.GetAxis("Horizontal");
 
         rigPlayer.velocity = new Vector2(inputX * playerSpeed, rigPlayer.velocity.y);
@@ -137,6 +191,14 @@ public class PlayerControl : MonoBehaviour
     {
         if (TouchFloor() && UnityEngine.Input.GetKeyDown(KeyCode.Mouse0) && magazineAmmo>0 && Time.time > lastTimeShoot+0.3f && !isReloading)
         {
+            // Force FrontShooting
+            if (GetComponent<SpriteRenderer>().flipX && transform.position.x - Camera.main.ScreenToWorldPoint(Input.mousePosition).x < 0)
+            {
+                return;
+            } else if (!GetComponent<SpriteRenderer>().flipX && transform.position.x - Camera.main.ScreenToWorldPoint(Input.mousePosition).x > 0)
+            {
+                return;
+            }
             Instantiate(bullet, transform);
             magazineAmmo--;
             lastTimeShoot = Time.time;
