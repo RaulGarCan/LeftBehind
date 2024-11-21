@@ -1,20 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class BlobControl : MonoBehaviour
 {
-    public int speed;
     private bool movingToEndPos;
-    public int finalPosX;
-    private Vector3 startPos;
-    private Vector3 endPos;
-    public int damage, radAmount;
+    private Vector3 startPos, endPos;
+    public int finalPosX, speed, damage, radAmount, maxHealth;
+    public GameObject blobHealthBar;
+    private Image imageHealthBar;
     private void Start()
     {
         startPos = transform.position;
         movingToEndPos = true;
         endPos = new Vector3(finalPosX, transform.position.y, transform.position.z);
+        blobHealthBar.SetActive(false);
     }
     private void Update()
     {
