@@ -11,14 +11,12 @@ public class PlayerControl : MonoBehaviour
     private Animator animPlayer;
     public GameObject deathMenu, bullet, HUD;
     private HUDControl hudControl;
-    public int playerJumpForce, playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
+    public float playerJumpforce;
+    public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
     private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer;
     private bool isVulnerable, isReloading, isHungry, isRadiating;
     private float lastTimeShoot, lastTimeHunger, lastTimeRad;
     private string ammoString;
-    private float dashEndPos;
-    private bool isDashing, canMove;
-    private float lastTimeDash;
     private void Start()
     {
         Time.timeScale = 1f;
@@ -41,99 +39,50 @@ public class PlayerControl : MonoBehaviour
         itemMedkit = 0;
         itemFood = 0;
 
-        dashEndPos = transform.position.x;
-        isDashing = false;
-        canMove = true;
-
         UpdateHUDInfo();
     }
     private void Update()
     {
-        FlipSpritePlayer();
         JumpPlayer();
+        FlipSpritePlayer();
         animPlayer.SetFloat("VelocityAbsX", Math.Abs(rigPlayer.velocity.x));
         animPlayer.SetFloat("VelocityY", rigPlayer.velocity.y);
         ShootPlayer();
         ReloadGunPlayer();
         UpdateHUDInfo();
-        if (radiation<=0 && Time.time>lastTimeRad + 1f)
+        if (radiation <= 0 && Time.time > lastTimeRad + 1f)
         {
             lastTimeRad = Time.time;
             ReduceHealthPlayer();
         }
-        if (hunger<=0 && Time.time > lastTimeHunger + 1f)
+        if (hunger <= 0 && Time.time > lastTimeHunger + 1f)
         {
             ReduceHealthPlayer();
         }
-        if(isHungry){
+        if (isHungry)
+        {
             isHungry = false;
             Invoke("ReduceHungerPlayer", 4f);
         }
         EatFoodPlayer();
         UseMedKitPlayer();
-
-        //Dash(25f);
+        animPlayer.SetBool("isGrounded", isGrounded());
     }
-    /*
-    private void Dash(float dashDistance)
-    {
-        // Calcula la direccion del dash en base a la orientacion del jugador
-        int dashDir;
-        if (spritePlayer.flipX)
-        {
-            dashDir = -1;
-        } else
-        {
-            dashDir = 1;
-        }
-
-        // Calcula la posicion final del dash, desactiva el movimiento e impide que se vuelva a invocar el metodo Dash
-        if (Input.GetKeyDown(KeyCode.Mouse1) && Time.time>lastTimeDash+1f)
-        {
-            dashEndPos = dashDir * (Math.Abs(transform.position.x) + dashDistance);
-            isDashing = true;
-            canMove = false;
-            lastTimeDash = Time.time;
-            // Reactiva el movimiento y desactiva el estado dash tras 0.2 segundos
-            Invoke("PlayerCanMove", 0.2f);
-        }
-        // Llama al metodo encargado del propio movimiento del jugador
-        DashMovement(dashDistance);
-    }
-    private void DashMovement(float dashSpeed)
-    {
-        if (isDashing)
-        {
-            // Desplaza el jugador hacia la posicion x desde la que iniciaba + la distancia del dash que le indicamos
-            transform.position = Vector3.MoveTowards(transform.position, new Vector3(dashEndPos, transform.position.y, transform.position.z), dashSpeed * Time.deltaTime);
-        }
-    }
-    public void PlayerCanMove()
-    {
-        isDashing = false;
-        canMove = true;
-    }
-     */
     private void FixedUpdate()
     {
         MovementPlayer();
     }
     private void MovementPlayer()
     {
-        if (!canMove)
-        {
-            return;
-        }
-
         float inputX = UnityEngine.Input.GetAxis("Horizontal");
 
         rigPlayer.velocity = new Vector2(inputX * playerSpeed, rigPlayer.velocity.y);
     }
     private void JumpPlayer()
     {
-        if (UnityEngine.Input.GetKeyDown(KeyCode.W) && TouchFloor() && !isReloading)
+        if (TouchFloor() && !isReloading && UnityEngine.Input.GetKeyDown(KeyCode.Space))
         {
-            rigPlayer.AddForce(Vector2.up * playerJumpForce, ForceMode2D.Impulse);
+            rigPlayer.AddForce(Vector2.up * playerJumpforce, ForceMode2D.Impulse);
         }
     }
     private void FlipSpritePlayer()
@@ -157,6 +106,10 @@ public class PlayerControl : MonoBehaviour
         }
         return false;
     }
+    private bool isGrounded()
+    {
+        return TouchFloor();
+    }
     public void HurtPlayer(int damage, int rad)
     {
         if (isVulnerable)
@@ -165,7 +118,7 @@ public class PlayerControl : MonoBehaviour
             Debug.Log("PlayerHealth: "+health);
             health-=damage;
             MakeInvunerable();
-            Invoke("MakeVulnerable", 4f);
+            Invoke("MakeVulnerable", 1.5f);
             if (health<=0)
             {
                 DeathPlayer();
@@ -234,10 +187,10 @@ public class PlayerControl : MonoBehaviour
     private void UpdateHUDInfo()
     {
         hudControl.SetAmmoHUD(ammoString);
-        hudControl.SetHealthHUD(health);
-        hudControl.SetHungerHUD(hunger);
+        hudControl.SetHealthHUD(health, maxHealth);
+        hudControl.SetHungerHUD(hunger, maxHunger);
         hudControl.SetRemAmmoHUD(remainingAmmo);
-        hudControl.SetRadHUD(radiation);
+        hudControl.SetRadHUD(radiation, maxRadiation);
         hudControl.SetTimerHUD((int)Time.time/60, (int)Time.time%60);
         hudControl.SetFoodHUD(itemFood);
         hudControl.SetMedkitHUD(itemMedkit);

@@ -17,17 +17,17 @@ public class HUDControl : MonoBehaviour
         itemFoodText = foodHUD.GetComponent<TMP_Text>();
         scoreText = scoreHUD.GetComponent<TMP_Text>();
     }
-    public void SetHungerHUD(int hunger)
+    public void SetHungerHUD(int hunger, int maxHunger)
     {
-        hungerHUD.GetComponent<Image>().fillAmount = (float)hunger/100;
+        hungerHUD.GetComponent<Image>().fillAmount = (float)hunger/maxHunger;
     }
-    public void SetHealthHUD(int health)
+    public void SetHealthHUD(int health, int maxHealth)
     {
-        healthHUD.GetComponent<Image>().fillAmount = (float)health/100;
+        healthHUD.GetComponent<Image>().fillAmount = (float)health/maxHealth;
     }
-    public void SetRadHUD(int rad)
+    public void SetRadHUD(int rad, int maxRad)
     {
-        radHUD.GetComponent<Image>().fillAmount = (float)rad/100;
+        radHUD.GetComponent<Image>().fillAmount = (float)rad/maxRad;
     }
     public void SetAmmoHUD(string ammo)
     {

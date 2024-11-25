@@ -44,6 +44,10 @@ public class BulletControl : MonoBehaviour
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
+        if (collision.gameObject.CompareTag("Blob"))
+        {
+            collision.gameObject.GetComponent<BlobControl>().HurtBlob();
+        }
         if (!collision.CompareTag("Player") && !collision.CompareTag("Item"))
         {
             DestroyBullet();

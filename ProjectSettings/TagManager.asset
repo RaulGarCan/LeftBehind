@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Ground
   - Item
+  - PlayerBullet
+  - Blob
   layers:
   - Default
   - TransparentFX

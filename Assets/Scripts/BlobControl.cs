@@ -10,12 +10,14 @@ public class BlobControl : MonoBehaviour
     public int finalPosX, speed, damage, radAmount, maxHealth;
     public GameObject blobHealthBar;
     private Image imageHealthBar;
+    private int health;
     private void Start()
     {
+        imageHealthBar = blobHealthBar.transform.GetChild(1).GetComponent<Image>();
         startPos = transform.position;
         movingToEndPos = true;
         endPos = new Vector3(finalPosX, transform.position.y, transform.position.z);
-        blobHealthBar.SetActive(false);
+        health = maxHealth;
     }
     private void Update()
     {
@@ -26,6 +28,11 @@ public class BlobControl : MonoBehaviour
         {
             MoveToPos(transform.position, startPos);
         }
+        if (health<=0)
+        {
+            Destroy(gameObject);
+        }
+        UpdateHealthBarBlob();
     }
     private void MoveToPos(Vector3 startPos, Vector3 finalPos)
     {
@@ -34,6 +41,14 @@ public class BlobControl : MonoBehaviour
         {
             movingToEndPos = !movingToEndPos;
         }
+    }
+    private void UpdateHealthBarBlob()
+    {
+        imageHealthBar.fillAmount = (float)health/maxHealth;
+    }
+    public void HurtBlob()
+    {
+        health--;
     }
     private void OnTriggerStay2D(Collider2D collision)
     {

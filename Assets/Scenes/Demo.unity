@@ -4794,7 +4794,7 @@ GameObject:
   - component: {fileID: 1453614810}
   m_Layer: 0
   m_Name: Blob
-  m_TagString: Untagged
+  m_TagString: Blob
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -4815,7 +4815,7 @@ MonoBehaviour:
   speed: 1
   damage: 10
   radAmount: 15
-  maxHealth: 0
+  maxHealth: 5
   blobHealthBar: {fileID: 1542525347}
 --- !u!95 &1453614805
 Animator:
@@ -7676,7 +7676,7 @@ SpriteRenderer:
   m_SortingLayerID: -1490176711
   m_SortingLayer: 1
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: fc3d8653e93920f4fb264748c7884d93, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5507ab43ff8044341a3801d8dd8a3349, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -7762,8 +7762,8 @@ CapsuleCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.18656635, y: -0.03498125}
-  m_Size: {x: 0.98600864, y: 1.9067168}
+  m_Offset: {x: -0.14899826, y: -0.03498125}
+  m_Size: {x: 0.7355528, y: 1.9067168}
   m_Direction: 0
 --- !u!114 &1973043020
 MonoBehaviour:
@@ -7780,7 +7780,7 @@ MonoBehaviour:
   deathMenu: {fileID: 1731931671}
   bullet: {fileID: 6060308657992275431, guid: 1db880519d517704bb6bdf1b6cc53b1c, type: 3}
   HUD: {fileID: 1918477320}
-  playerJumpForce: 15
+  playerJumpforce: 15
   playerSpeed: 4
   maxHealth: 100
   maxHunger: 100
