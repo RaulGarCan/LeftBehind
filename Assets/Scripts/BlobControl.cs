@@ -18,6 +18,7 @@ public class BlobControl : MonoBehaviour
         movingToEndPos = true;
         endPos = new Vector3(finalPosX, transform.position.y, transform.position.z);
         health = maxHealth;
+        blobHealthBar.SetActive(false);
     }
     private void Update()
     {
@@ -44,6 +45,10 @@ public class BlobControl : MonoBehaviour
     }
     private void UpdateHealthBarBlob()
     {
+        if (!blobHealthBar.activeSelf && health<maxHealth)
+        {
+            blobHealthBar.SetActive(true);
+        }
         imageHealthBar.fillAmount = (float)health/maxHealth;
     }
     public void HurtBlob()

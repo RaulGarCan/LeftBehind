@@ -45,6 +45,6 @@ public class MenuControl : MonoBehaviour
     }
     private void LoadGame(GameDifficulty gameDifficulty)
     {
-        SceneManager.LoadScene("GameScene1");
+        SceneManager.LoadScene("Demo");
     }
 }

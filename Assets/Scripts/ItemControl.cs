@@ -17,7 +17,7 @@ public class ItemControl : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             PickupMethod(collision.gameObject);
-            //Destroy(gameObject);
+            Destroy(gameObject);
         }
     }
     private void PickupMethod(GameObject gameObject)

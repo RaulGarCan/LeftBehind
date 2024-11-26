@@ -17,6 +17,7 @@ public class PlayerControl : MonoBehaviour
     private bool isVulnerable, isReloading, isHungry, isRadiating;
     private float lastTimeShoot, lastTimeHunger, lastTimeRad;
     private string ammoString;
+    public bool isTutorial;
     private void Start()
     {
         Time.timeScale = 1f;
@@ -27,7 +28,7 @@ public class PlayerControl : MonoBehaviour
         hunger = maxHunger;
         radiation = maxRadiation;
         remainingAmmo = maxAmmo;
-        magazineAmmo = maxMagAmmo;
+        magazineAmmo = 0;
         isVulnerable = true;
         hudControl = HUD.GetComponent<HUDControl>();
         lastTimeShoot = Time.time;
@@ -39,27 +40,36 @@ public class PlayerControl : MonoBehaviour
         itemMedkit = 0;
         itemFood = 0;
 
+        if (isTutorial)
+        {
+            LoadTutorialStats();
+        }
+
         UpdateHUDInfo();
     }
     private void Update()
     {
-        JumpPlayer();
+        if (!isTutorial) 
+        {
+            JumpPlayer();
+        }
+        ShootPlayer();
+        ReloadGunPlayer();
         FlipSpritePlayer();
         animPlayer.SetFloat("VelocityAbsX", Math.Abs(rigPlayer.velocity.x));
         animPlayer.SetFloat("VelocityY", rigPlayer.velocity.y);
-        ShootPlayer();
-        ReloadGunPlayer();
         UpdateHUDInfo();
-        if (radiation <= 0 && Time.time > lastTimeRad + 1f)
+        if (radiation <= 0 && Time.time > lastTimeRad + 3f)
         {
             lastTimeRad = Time.time;
             ReduceHealthPlayer();
         }
-        if (hunger <= 0 && Time.time > lastTimeHunger + 1f)
+        if (hunger <= 0 && Time.time > lastTimeHunger + 3f)
         {
+            lastTimeHunger = Time.time;
             ReduceHealthPlayer();
         }
-        if (isHungry)
+        if (isHungry && !isTutorial)
         {
             isHungry = false;
             Invoke("ReduceHungerPlayer", 4f);
@@ -105,6 +115,14 @@ public class PlayerControl : MonoBehaviour
             return true;
         }
         return false;
+    }
+
+    private void LoadTutorialStats()
+    {
+        health -= 30;
+        hunger -= 25;
+        radiation -= 15;
+        remainingAmmo = 0;
     }
     private bool isGrounded()
     {
@@ -216,11 +234,14 @@ public class PlayerControl : MonoBehaviour
         {
             hunger = 0;
         }
-        lastTimeHunger = Time.time;
     }
     private void ReduceHealthPlayer()
     {
         health--;
+        if (health<=0)
+        {
+            DeathPlayer();
+        }
     }
     public void PickupFoodCan(int addScore)
     {
@@ -255,7 +276,8 @@ public class PlayerControl : MonoBehaviour
         if (itemMedkit>0 && UnityEngine.Input.GetKeyDown(KeyCode.F) && health<maxHealth)
         {
             itemMedkit--;
-            HealPlayer(25);
+            HealPlayer(30);
+            HealRadPlayer(15);
         }
     }
     private void HealPlayer(int healAmount)
@@ -266,6 +288,17 @@ public class PlayerControl : MonoBehaviour
         } else
         {
             health += healAmount;
+        }
+    }
+    private void HealRadPlayer(int radHealAmount)
+    {
+        if (radiation + radHealAmount > maxRadiation)
+        {
+            radiation = maxRadiation;
+        }
+        else
+        {
+            radiation += radHealAmount;
         }
     }
     private void GiveFoodPlayer(int foodAmount)
