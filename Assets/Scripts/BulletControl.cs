@@ -24,15 +24,11 @@ public class BulletControl : MonoBehaviour
         Vector3 direction = mousePos - transform.position;
         Vector3 rotation = transform.position - mousePos;
         float rot = Mathf.Atan2(rotation.x, rotation.y) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0, 0, rot + 90);
+        Debug.Log("MouseRot"+ rot);
+        transform.rotation = Quaternion.Euler(0, 0, Mathf.Abs(rot) + 90);
         rb.velocity = new Vector2(direction.x, direction.y).normalized * speed;
 
         Invoke("DestroyBullet", 5f);
-    }
-    private void Update()
-    {
-        //MoveBullet();
-        //Debug.Log("BulletPos: "+transform.position);
     }
     public void DestroyBullet()
     {

@@ -13,13 +13,17 @@ public class PlayerControl : MonoBehaviour
     private HUDControl hudControl;
     public float playerJumpforce;
     public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
-    private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer;
+    private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer;
     private bool isVulnerable, isReloading, isHungry, isRadiating;
     private float lastTimeShoot, lastTimeHunger, lastTimeRad;
     private string ammoString;
     public bool isTutorial;
+    private DifficultyControl difficultyControl;
     private void Start()
     {
+        difficultyControl = GetComponent<DifficultyControl>();
+        LoadDifficultySettings();
+
         Time.timeScale = 1f;
         rigPlayer = GetComponent<Rigidbody2D>();
         spritePlayer = GetComponent<SpriteRenderer>();
@@ -39,11 +43,16 @@ public class PlayerControl : MonoBehaviour
         isHungry = true;
         itemMedkit = 0;
         itemFood = 0;
+        sprintSpeedPlayer = 0;
 
         if (isTutorial)
         {
             LoadTutorialStats();
         }
+
+        RefillGun();
+
+        //LoadPlayerPersistStats();
 
         UpdateHUDInfo();
     }
@@ -78,15 +87,24 @@ public class PlayerControl : MonoBehaviour
         UseMedKitPlayer();
         animPlayer.SetBool("isGrounded", isGrounded());
     }
+    private void LoadPlayerPersistStats()
+    {
+
+    }
+    private void LoadDifficultySettings()
+    {
+        maxHealth = (int)(maxHealth*difficultyControl.GetPlayerHealthMultiplier());
+    }
     private void FixedUpdate()
     {
+        SprintPlayer();
         MovementPlayer();
     }
     private void MovementPlayer()
     {
         float inputX = UnityEngine.Input.GetAxis("Horizontal");
 
-        rigPlayer.velocity = new Vector2(inputX * playerSpeed, rigPlayer.velocity.y);
+        rigPlayer.velocity = new Vector2(inputX * (playerSpeed+sprintSpeedPlayer), rigPlayer.velocity.y);
     }
     private void JumpPlayer()
     {
@@ -95,20 +113,30 @@ public class PlayerControl : MonoBehaviour
             rigPlayer.AddForce(Vector2.up * playerJumpforce, ForceMode2D.Impulse);
         }
     }
+    private void SprintPlayer()
+    {
+        if (UnityEngine.Input.GetKey(KeyCode.LeftShift) && !isReloading)
+        {
+            sprintSpeedPlayer = 2;
+        } else
+        {
+            sprintSpeedPlayer = 0;
+        }
+    }
     private void FlipSpritePlayer()
     {
-        if (rigPlayer.velocity.x < 0)
+        if (rigPlayer.velocity.x < -0.01f)
         {
             spritePlayer.flipX = true;
         }
-        else if (rigPlayer.velocity.x > 0)
+        else if (rigPlayer.velocity.x > 0.01f)
         {
             spritePlayer.flipX = false;
         }
     }
     private bool TouchFloor()
     {
-        RaycastHit2D touch = Physics2D.Raycast(transform.position + new Vector3(0, -1.6f, 0), Vector2.down, 0.2f);
+        RaycastHit2D touch = Physics2D.Raycast(transform.position + new Vector3(0, -1.6f, 0), Vector2.down, 0.45f);
 
         if (touch.collider != null && touch.collider.CompareTag("Ground"))
         {
