@@ -18,6 +18,7 @@ public class PlayerControl : MonoBehaviour
     private float lastTimeShoot, lastTimeHunger, lastTimeRad;
     private string ammoString;
     public bool isTutorial;
+    private bool enableInfiniteAmmo;
     private DifficultyControl difficultyControl;
     private void Start()
     {
@@ -61,6 +62,12 @@ public class PlayerControl : MonoBehaviour
         if (!isTutorial) 
         {
             JumpPlayer();
+        } else
+        {
+            if (magazineAmmo == 0 && enableInfiniteAmmo) 
+            {
+                magazineAmmo++;
+            }
         }
         ShootPlayer();
         ReloadGunPlayer();
@@ -97,7 +104,10 @@ public class PlayerControl : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        SprintPlayer();
+        if (!isTutorial)
+        {
+            SprintPlayer();
+        }
         MovementPlayer();
     }
     private void MovementPlayer()
@@ -229,6 +239,8 @@ public class PlayerControl : MonoBehaviour
         }
 
         ammoString = magazineAmmo.ToString();
+
+        enableInfiniteAmmo = true;
     }
     private void UpdateHUDInfo()
     {
