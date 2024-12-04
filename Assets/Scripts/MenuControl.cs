@@ -59,7 +59,7 @@ public class MenuControl : MonoBehaviour
         difficultyControl.StoreDifficultyData(gameDifficulty);
         SceneManager.LoadScene(sceneName);
     }
-    public void LoadScene()
+    private void LoadScene()
     {
         SceneManager.LoadScene(sceneName);
     }

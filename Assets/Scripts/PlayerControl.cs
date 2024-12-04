@@ -11,6 +11,7 @@ public class PlayerControl : MonoBehaviour
     private Animator animPlayer;
     public GameObject deathMenu, bullet, HUD;
     private HUDControl hudControl;
+    private MenuControl menuControl;
     public float playerJumpforce;
     public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
     private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer;
@@ -18,7 +19,6 @@ public class PlayerControl : MonoBehaviour
     private float lastTimeShoot, lastTimeHunger, lastTimeRad;
     private string ammoString;
     public bool isTutorial;
-    private bool enableInfiniteAmmo;
     private DifficultyControl difficultyControl;
     private void Start()
     {
@@ -45,6 +45,7 @@ public class PlayerControl : MonoBehaviour
         itemMedkit = 0;
         itemFood = 0;
         sprintSpeedPlayer = 0;
+        menuControl = GetComponent<MenuControl>();
 
         if (isTutorial)
         {
@@ -62,12 +63,6 @@ public class PlayerControl : MonoBehaviour
         if (!isTutorial) 
         {
             JumpPlayer();
-        } else
-        {
-            if (magazineAmmo == 0 && enableInfiniteAmmo) 
-            {
-                magazineAmmo++;
-            }
         }
         ShootPlayer();
         ReloadGunPlayer();
@@ -109,6 +104,13 @@ public class PlayerControl : MonoBehaviour
             SprintPlayer();
         }
         MovementPlayer();
+    }
+    public void ExitTutorial()
+    {
+        if (health==maxHealth && hunger==maxHunger && radiation==maxRadiation)
+        {
+            menuControl.FadeScene("Level1");
+        }
     }
     private void MovementPlayer()
     {
@@ -239,8 +241,6 @@ public class PlayerControl : MonoBehaviour
         }
 
         ammoString = magazineAmmo.ToString();
-
-        enableInfiniteAmmo = true;
     }
     private void UpdateHUDInfo()
     {
