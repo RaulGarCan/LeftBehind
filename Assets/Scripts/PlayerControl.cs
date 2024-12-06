@@ -9,13 +9,13 @@ public class PlayerControl : MonoBehaviour
     private Rigidbody2D rigPlayer;
     private SpriteRenderer spritePlayer;
     private Animator animPlayer;
-    public GameObject deathMenu, bullet, HUD;
+    public GameObject deathMenu, bullet, HUD, thoughts;
     private HUDControl hudControl;
     private MenuControl menuControl;
     public float playerJumpforce;
     public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
     private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer;
-    private bool isVulnerable, isReloading, isHungry, isRadiating;
+    private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking;
     private float lastTimeShoot, lastTimeHunger, lastTimeRad;
     private string ammoString;
     public bool isTutorial;
@@ -42,6 +42,7 @@ public class PlayerControl : MonoBehaviour
         ammoString = magazineAmmo.ToString();
         hungerMultiplier = 5;
         isHungry = true;
+        isThinking = false;
         itemMedkit = 0;
         itemFood = 0;
         sprintSpeedPlayer = 0;
@@ -60,6 +61,7 @@ public class PlayerControl : MonoBehaviour
     }
     private void Update()
     {
+        PauseGame();
         if (!isTutorial) 
         {
             JumpPlayer();
@@ -89,6 +91,45 @@ public class PlayerControl : MonoBehaviour
         UseMedKitPlayer();
         animPlayer.SetBool("isGrounded", isGrounded());
     }
+    private void PauseGame()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            hudControl.PauseMenu();
+        }
+    }
+    private void ChangeThoughtsPlayer(string newThought)
+    {
+        if (isThinking)
+        {
+            return;
+        }
+        isThinking = true;
+        //thoughts.transform.GetChild(0).GetChild(1).GetComponent<TMP_Text>().text = newThought;
+        thoughts.SetActive(true);
+        StartCoroutine(LoadThoughtsText(newThought, thoughts.transform.GetChild(0).GetChild(1).GetComponent<TMP_Text>()));
+        Invoke("FadeThinking", 2f);
+    }
+    private void FadeThinking()
+    {
+        thoughts.transform.GetChild(0).GetChild(0).GetComponent<Animator>().SetTrigger("FadeOut");
+        thoughts.transform.GetChild(0).GetChild(1).GetComponent<Animator>().SetTrigger("FadeOut");
+        Invoke("StopThinking", 1f);
+    }
+    private void StopThinking()
+    {
+        thoughts.SetActive(false);
+        isThinking = false;
+    }
+    IEnumerator LoadThoughtsText(string thought, TMP_Text text)
+    {
+        text.text = "";
+        for (int i=0; i<thought.Length; i++)
+        {
+            text.text += thought.ToCharArray()[i];
+            yield return new WaitForSeconds(0.02f);
+        }
+    }
     private void LoadPlayerPersistStats()
     {
 
@@ -107,9 +148,25 @@ public class PlayerControl : MonoBehaviour
     }
     public void ExitTutorial()
     {
-        if (health==maxHealth && hunger==maxHunger && radiation==maxRadiation)
+        if (health==maxHealth)
         {
-            menuControl.FadeScene("Level1");
+            if (hunger == maxHunger)
+            {
+                
+                if (remainingAmmo <= 0)
+                {
+                    menuControl.FadeScene("Level1");
+                } else
+                {
+                    ChangeThoughtsPlayer("My gun is empty...");
+                }
+            } else
+            {
+                ChangeThoughtsPlayer("I should eat...");
+            }
+        } else
+        {
+            ChangeThoughtsPlayer("I'm hurt...");
         }
     }
     private void MovementPlayer()

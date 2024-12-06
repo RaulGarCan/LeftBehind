@@ -10,6 +10,7 @@ public class MenuControl : MonoBehaviour
     private DifficultyControl difficultyControl;
     public GameObject sceneFader;
     private string sceneName;
+    private bool isFading;
     public enum GameDifficulty
     {
         easy,
@@ -18,11 +19,25 @@ public class MenuControl : MonoBehaviour
     }
     private void Start()
     {
+        isFading = false;
         Time.timeScale = 1;
         difficultyControl = GetComponent<DifficultyControl>();
     }
+
+    private void Update()
+    {
+        if (SceneManager.GetActiveScene().name.ToLower().Contains("level") || SceneManager.GetActiveScene().name.ToLower().Equals("tutorial"))
+        {
+            return;
+        }
+        if (Input.GetKeyDown(KeyCode.Escape) && !SceneManager.GetActiveScene().name.ToLower().Equals("mainmenu") && !isFading)
+        {
+            FadeScene("MainMenu");
+        }
+    }
     public void FadeGameScene(string sceneName)
     {
+        isFading = true;
         this.sceneName = sceneName;
         FadeAnimation();
         Invoke("LoadGame", 1f);
@@ -46,6 +61,7 @@ public class MenuControl : MonoBehaviour
     }
     public void FadeScene(string sceneName)
     {
+        isFading = true;
         this.sceneName = sceneName;
         FadeAnimation();
         Invoke("LoadScene", 1f);
@@ -69,6 +85,7 @@ public class MenuControl : MonoBehaviour
     }
     public void LoadMainMenu()
     {
+        Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
     }
 }

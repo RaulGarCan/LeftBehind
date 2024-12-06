@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class HUDControl : MonoBehaviour
 {
-    public GameObject hungerHUD, healthHUD, ammoHUD, remAmmoHUD, radHUD, timerHUD, medkitHUD, foodHUD, scoreHUD;
+    public GameObject hungerHUD, healthHUD, ammoHUD, remAmmoHUD, radHUD, timerHUD, medkitHUD, foodHUD, scoreHUD, pauseMenu;
     private TMP_Text ammoText, remAmmoText, timerText, itemMedkitText, itemFoodText, scoreText;
     private void Start()
     {
@@ -51,5 +51,23 @@ public class HUDControl : MonoBehaviour
     public void SetScoreHUD(int score)
     {
         scoreText.text = score.ToString();
+    }
+    public void PauseMenu()
+    {
+        if (!pauseMenu.activeSelf)
+        {
+            pauseMenu.SetActive(true);
+            Time.timeScale = 0;
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            pauseMenu.SetActive(false);
+        }
+    }
+    public void ContinueGame()
+    {
+        Time.timeScale = 1f;
+        pauseMenu.SetActive(false);
     }
 }
