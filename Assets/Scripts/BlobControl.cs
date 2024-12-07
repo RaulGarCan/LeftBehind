@@ -11,23 +11,38 @@ public class BlobControl : MonoBehaviour
     public GameObject blobHealthBar;
     private Image imageHealthBar;
     private int health;
+    private DifficultyControl difficultyControl;
+    public bool isChasing;
     private void Start()
     {
+        difficultyControl = GetComponent<DifficultyControl>();
+        LoadDifficultySettings();
         imageHealthBar = blobHealthBar.transform.GetChild(1).GetComponent<Image>();
         startPos = transform.position;
         movingToEndPos = true;
         endPos = new Vector3(finalPosX, transform.position.y, transform.position.z);
         health = maxHealth;
         blobHealthBar.SetActive(false);
+        isChasing = false;
+    }
+    private void LoadDifficultySettings()
+    {
+        maxHealth = (int)(maxHealth * difficultyControl.GetEnemyHealthMultiplier());
+        damage = (int)(damage * difficultyControl.GetEnemyDamageMultiplier());
+        speed = (int)(speed * difficultyControl.GetEnemySpeedMultiplier());
     }
     private void Update()
     {
-        if (movingToEndPos)
+        if (!isChasing)
         {
-            MoveToPos(transform.position, endPos);
-        } else
-        {
-            MoveToPos(transform.position, startPos);
+            if (movingToEndPos)
+            {
+                MoveToPos(transform.position, endPos);
+            }
+            else
+            {
+                MoveToPos(transform.position, startPos);
+            }
         }
         if (health<=0)
         {

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class LevelLoaderControl : MonoBehaviour
 {
@@ -9,7 +10,16 @@ public class LevelLoaderControl : MonoBehaviour
     {
         if (collision.CompareTag("Player"))
         {
-            player.GetComponent<PlayerControl>().ExitTutorial();
+            if (SceneManager.GetActiveScene().name.ToLower().Contains("tutorial"))
+            {
+                player.GetComponent<PlayerControl>().ExitTutorial();
+            } else if (!SceneManager.GetActiveScene().name.ToLower().Contains("final"))
+            {
+                player.GetComponent<PlayerControl>().NextLevel();
+            } else
+            {
+
+            }
         }
     }
 }

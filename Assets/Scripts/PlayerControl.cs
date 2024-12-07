@@ -3,25 +3,30 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerControl : MonoBehaviour
 {
     private Rigidbody2D rigPlayer;
     private SpriteRenderer spritePlayer;
     private Animator animPlayer;
-    public GameObject deathMenu, bullet, HUD, thoughts;
+    public GameObject deathMenuCanvas, bullet, HUD, thoughts;
     private HUDControl hudControl;
     private MenuControl menuControl;
     public float playerJumpforce;
     public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
-    private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer;
+    private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer, currentLevel;
     private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking;
-    private float lastTimeShoot, lastTimeHunger, lastTimeRad;
+    private float lastTimeShoot, lastTimeHunger, lastTimeRad, startTimeScene;
     private string ammoString;
     public bool isTutorial;
     private DifficultyControl difficultyControl;
     private void Start()
     {
+        startTimeScene = Time.time;
+
+        currentLevel = 1;
+
         difficultyControl = GetComponent<DifficultyControl>();
         LoadDifficultySettings();
 
@@ -52,11 +57,12 @@ public class PlayerControl : MonoBehaviour
         {
             LoadTutorialStats();
         }
+        else if(currentLevel>1)
+        {
+            LoadPlayerPersistStats();
+        }
 
         RefillGun();
-
-        //LoadPlayerPersistStats();
-
         UpdateHUDInfo();
     }
     private void Update()
@@ -105,16 +111,17 @@ public class PlayerControl : MonoBehaviour
             return;
         }
         isThinking = true;
-        //thoughts.transform.GetChild(0).GetChild(1).GetComponent<TMP_Text>().text = newThought;
         thoughts.SetActive(true);
         StartCoroutine(LoadThoughtsText(newThought, thoughts.transform.GetChild(0).GetChild(1).GetComponent<TMP_Text>()));
-        Invoke("FadeThinking", 2f);
+        if (!newThought.ToLower().Contains("e to interact")) {
+            Invoke("FadeThinking", 2f);
+        }
     }
     private void FadeThinking()
     {
         thoughts.transform.GetChild(0).GetChild(0).GetComponent<Animator>().SetTrigger("FadeOut");
         thoughts.transform.GetChild(0).GetChild(1).GetComponent<Animator>().SetTrigger("FadeOut");
-        Invoke("StopThinking", 1f);
+        Invoke("StopThinking", 2f);
     }
     private void StopThinking()
     {
@@ -132,7 +139,25 @@ public class PlayerControl : MonoBehaviour
     }
     private void LoadPlayerPersistStats()
     {
-
+        health = PlayerPrefs.GetInt("health");
+        hunger = PlayerPrefs.GetInt("hunger");
+        radiation = PlayerPrefs.GetInt("radiation");
+        remainingAmmo = PlayerPrefs.GetInt("remainingAmmo");
+        magazineAmmo = PlayerPrefs.GetInt("magazineAmmo");
+        itemMedkit = PlayerPrefs.GetInt("itemMedkit");
+        itemFood = PlayerPrefs.GetInt("itemFood");
+        scorePlayer = PlayerPrefs.GetInt("scorePlayer");
+    }
+    private void SavePlayerPersistStats()
+    { 
+        PlayerPrefs.SetInt("health", health);
+        PlayerPrefs.SetInt("hunger", hunger);
+        PlayerPrefs.SetInt("radiation", radiation);
+        PlayerPrefs.SetInt("remainingAmmo", remainingAmmo);
+        PlayerPrefs.SetInt("magazineAmmo", magazineAmmo);
+        PlayerPrefs.SetInt("itemMedkit", itemMedkit);
+        PlayerPrefs.SetInt("itemFood", itemFood);
+        PlayerPrefs.SetInt("scorePlayer", scorePlayer);
     }
     private void LoadDifficultySettings()
     {
@@ -155,7 +180,11 @@ public class PlayerControl : MonoBehaviour
                 
                 if (remainingAmmo <= 0)
                 {
-                    menuControl.FadeScene("Level1");
+                    ChangeThoughtsPlayer("Hold E to interact");
+                    if (Input.GetKey(KeyCode.E))
+                    {
+                        menuControl.FadeScene("Level1");
+                    }
                 } else
                 {
                     ChangeThoughtsPlayer("My gun is empty...");
@@ -252,8 +281,8 @@ public class PlayerControl : MonoBehaviour
     }
     private void DeathPlayer()
     {
+        deathMenuCanvas.SetActive(true);
         Time.timeScale = 0f;
-        deathMenu.SetActive(true);
     }
     private void ShootPlayer()
     {
@@ -306,7 +335,7 @@ public class PlayerControl : MonoBehaviour
         hudControl.SetHungerHUD(hunger, maxHunger);
         hudControl.SetRemAmmoHUD(remainingAmmo);
         hudControl.SetRadHUD(radiation, maxRadiation);
-        hudControl.SetTimerHUD((int)Time.time/60, (int)Time.time%60);
+        hudControl.SetTimerHUD((int)(Time.time-startTimeScene)/60, (int)(Time.time-startTimeScene)%60);
         hudControl.SetFoodHUD(itemFood);
         hudControl.SetMedkitHUD(itemMedkit);
         hudControl.SetScoreHUD(scorePlayer);
@@ -376,6 +405,12 @@ public class PlayerControl : MonoBehaviour
             HealPlayer(30);
             HealRadPlayer(15);
         }
+    }
+    public void NextLevel()
+    {
+        SavePlayerPersistStats();
+        SceneManager.LoadScene("Level"+currentLevel);
+        currentLevel++;
     }
     private void HealPlayer(int healAmount)
     {
