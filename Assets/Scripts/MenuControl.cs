@@ -38,6 +38,7 @@ public class MenuControl : MonoBehaviour
     public void FadeGameScene(string sceneName)
     {
         isFading = true;
+        Time.timeScale = 1f;
         this.sceneName = sceneName;
         FadeAnimation();
         Invoke("LoadGame", 1f);
@@ -62,6 +63,7 @@ public class MenuControl : MonoBehaviour
     public void FadeScene(string sceneName)
     {
         isFading = true;
+        Time.timeScale = 1;
         this.sceneName = sceneName;
         FadeAnimation();
         Invoke("LoadScene", 1f);
@@ -81,6 +83,7 @@ public class MenuControl : MonoBehaviour
     }
     public void ExitGame()
     {
+        Time.timeScale = 1;
         Application.Quit();
     }
     public void LoadMainMenu()

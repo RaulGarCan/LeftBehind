@@ -7,7 +7,8 @@ public class BlobControl : MonoBehaviour
 {
     private bool movingToEndPos;
     private Vector3 startPos, endPos;
-    public int finalPosX, speed, damage, radAmount, maxHealth;
+    public int finalPosX, damage, radAmount, maxHealth;
+    public float speed;
     public GameObject blobHealthBar;
     private Image imageHealthBar;
     private int health;
@@ -29,7 +30,7 @@ public class BlobControl : MonoBehaviour
     {
         maxHealth = (int)(maxHealth * difficultyControl.GetEnemyHealthMultiplier());
         damage = (int)(damage * difficultyControl.GetEnemyDamageMultiplier());
-        speed = (int)(speed * difficultyControl.GetEnemySpeedMultiplier());
+        speed = speed * difficultyControl.GetEnemySpeedMultiplier();
     }
     private void Update()
     {

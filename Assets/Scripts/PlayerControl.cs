@@ -16,8 +16,8 @@ public class PlayerControl : MonoBehaviour
     public float playerJumpforce;
     public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
     private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer, currentLevel;
-    private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking;
-    private float lastTimeShoot, lastTimeHunger, lastTimeRad, startTimeScene;
+    private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking, isDead, isPaused;
+    private float lastTimeShoot, lastTimeHunger, lastTimeRad, startTimeScene, lastTimeGrounded;
     private string ammoString;
     public bool isTutorial;
     private DifficultyControl difficultyControl;
@@ -26,6 +26,9 @@ public class PlayerControl : MonoBehaviour
         startTimeScene = Time.time;
 
         currentLevel = 1;
+
+        isDead = false;
+        isPaused = false;
 
         difficultyControl = GetComponent<DifficultyControl>();
         LoadDifficultySettings();
@@ -67,6 +70,10 @@ public class PlayerControl : MonoBehaviour
     }
     private void Update()
     {
+        if (Time.timeScale>0)
+        {
+            isPaused = false;
+        }
         PauseGame();
         if (!isTutorial) 
         {
@@ -99,8 +106,9 @@ public class PlayerControl : MonoBehaviour
     }
     private void PauseGame()
     {
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetKeyDown(KeyCode.Escape) && !deathMenuCanvas.activeSelf)
         {
+            isPaused = true;
             hudControl.PauseMenu();
         }
     }
@@ -200,12 +208,20 @@ public class PlayerControl : MonoBehaviour
     }
     private void MovementPlayer()
     {
+        if (isPaused || isDead)
+        {
+            return;
+        }
         float inputX = UnityEngine.Input.GetAxis("Horizontal");
 
         rigPlayer.velocity = new Vector2(inputX * (playerSpeed+sprintSpeedPlayer), rigPlayer.velocity.y);
     }
     private void JumpPlayer()
     {
+        if (isPaused || isDead)
+        {
+            return;
+        }
         if (TouchFloor() && !isReloading && UnityEngine.Input.GetKeyDown(KeyCode.Space))
         {
             rigPlayer.AddForce(Vector2.up * playerJumpforce, ForceMode2D.Impulse);
@@ -213,6 +229,10 @@ public class PlayerControl : MonoBehaviour
     }
     private void SprintPlayer()
     {
+        if (isPaused || isDead)
+        {
+            return;
+        }
         if (UnityEngine.Input.GetKey(KeyCode.LeftShift) && !isReloading)
         {
             sprintSpeedPlayer = 2;
@@ -234,10 +254,18 @@ public class PlayerControl : MonoBehaviour
     }
     private bool TouchFloor()
     {
-        RaycastHit2D touch = Physics2D.Raycast(transform.position + new Vector3(0, -1.6f, 0), Vector2.down, 0.45f);
-
-        if (touch.collider != null && touch.collider.CompareTag("Ground"))
+        if (Time.time <= lastTimeGrounded + 0.3f) // Coyote Time
         {
+            return true;
+        }
+
+        RaycastHit2D touchCenter = Physics2D.Raycast(transform.position + new Vector3(0, -1.1f, 0), Vector2.down, 0.98f);
+        RaycastHit2D touchLeft = Physics2D.Raycast(transform.position + new Vector3(-0.3f, -1.1f, 0), Vector2.down, 0.98f);
+        RaycastHit2D touchRight = Physics2D.Raycast(transform.position + new Vector3(0.3f, -1.1f, 0), Vector2.down, 0.98f);
+
+        if ((touchCenter.collider != null && touchCenter.collider.CompareTag("Ground")) || (touchLeft.collider != null && touchLeft.collider.CompareTag("Ground")) || (touchRight.collider != null && touchRight.collider.CompareTag("Ground")))
+        {
+            lastTimeGrounded = Time.time;
             return true;
         }
         return false;
@@ -247,7 +275,7 @@ public class PlayerControl : MonoBehaviour
     {
         health -= 30;
         hunger -= 25;
-        radiation -= 15;
+        //radiation -= 15;
         remainingAmmo = 0;
     }
     private bool isGrounded()
@@ -281,11 +309,17 @@ public class PlayerControl : MonoBehaviour
     }
     private void DeathPlayer()
     {
+        isDead = true;
+        rigPlayer.velocity = Vector3.zero;
         deathMenuCanvas.SetActive(true);
         Time.timeScale = 0f;
     }
     private void ShootPlayer()
     {
+        if (isDead || isPaused)
+        {
+            return;
+        }
         if (TouchFloor() && UnityEngine.Input.GetKeyDown(KeyCode.Mouse0) && magazineAmmo>0 && Time.time > lastTimeShoot+0.3f && !isReloading)
         {
             // Force FrontShooting
@@ -304,6 +338,10 @@ public class PlayerControl : MonoBehaviour
     }
     private void ReloadGunPlayer()
     {
+        if (isPaused || isDead)
+        {
+            return;
+        }
         if (UnityEngine.Input.GetKeyDown(KeyCode.R) && magazineAmmo<maxMagAmmo && !isReloading && remainingAmmo>0 && TouchFloor())
         {
             isReloading = true;
@@ -391,6 +429,10 @@ public class PlayerControl : MonoBehaviour
     }
     public void EatFoodPlayer()
     {
+        if (isPaused || isDead)
+        {
+            return;
+        }
         if (itemFood>0 && UnityEngine.Input.GetKeyDown(KeyCode.Q) && hunger<maxHunger)
         {
             itemFood--;
@@ -399,15 +441,20 @@ public class PlayerControl : MonoBehaviour
     }
     public void UseMedKitPlayer()
     {
+        if (isPaused || isDead)
+        {
+            return;
+        }
         if (itemMedkit>0 && UnityEngine.Input.GetKeyDown(KeyCode.F) && health<maxHealth)
         {
             itemMedkit--;
             HealPlayer(30);
-            HealRadPlayer(15);
+            //HealRadPlayer(15);
         }
     }
     public void NextLevel()
     {
+        Debug.Log("CurrrentLevel: " + currentLevel);
         SavePlayerPersistStats();
         SceneManager.LoadScene("Level"+currentLevel);
         currentLevel++;
