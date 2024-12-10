@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,11 +17,13 @@ public class PlayerControl : MonoBehaviour
     public float playerJumpforce;
     public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
     private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer, currentLevel;
-    private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking, isDead, isPaused;
+    private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking, isDead, isPaused, isEating, isHealing;
     private float lastTimeShoot, lastTimeHunger, lastTimeRad, startTimeScene, lastTimeGrounded;
     private string ammoString;
     public bool isTutorial;
     private DifficultyControl difficultyControl;
+    public Vector3 lastGroundPoint;
+    private bool canMove;
     private void Start()
     {
         startTimeScene = Time.time;
@@ -34,6 +37,7 @@ public class PlayerControl : MonoBehaviour
         LoadDifficultySettings();
 
         Time.timeScale = 1f;
+        canMove = true;
         rigPlayer = GetComponent<Rigidbody2D>();
         spritePlayer = GetComponent<SpriteRenderer>();
         animPlayer = GetComponent<Animator>();
@@ -46,6 +50,8 @@ public class PlayerControl : MonoBehaviour
         hudControl = HUD.GetComponent<HUDControl>();
         lastTimeShoot = Time.time;
         isReloading = false;
+        isEating = false;
+        isHealing = false;
         playerSpeedOrig = playerSpeed;
         ammoString = magazineAmmo.ToString();
         hungerMultiplier = 5;
@@ -70,7 +76,7 @@ public class PlayerControl : MonoBehaviour
     }
     private void Update()
     {
-        if (Time.timeScale>0)
+        if (Time.timeScale>0f)
         {
             isPaused = false;
         }
@@ -208,8 +214,9 @@ public class PlayerControl : MonoBehaviour
     }
     private void MovementPlayer()
     {
-        if (isPaused || isDead)
+        if (isPaused || isDead || !canMove)
         {
+            rigPlayer.velocity = Vector2.zero;
             return;
         }
         float inputX = UnityEngine.Input.GetAxis("Horizontal");
@@ -218,11 +225,11 @@ public class PlayerControl : MonoBehaviour
     }
     private void JumpPlayer()
     {
-        if (isPaused || isDead)
+        if (isPaused || isDead || !canMove)
         {
             return;
         }
-        if (TouchFloor() && !isReloading && UnityEngine.Input.GetKeyDown(KeyCode.Space))
+        if (TouchFloor(false) && !isReloading && UnityEngine.Input.GetKeyDown(KeyCode.Space))
         {
             rigPlayer.AddForce(Vector2.up * playerJumpforce, ForceMode2D.Impulse);
         }
@@ -233,7 +240,7 @@ public class PlayerControl : MonoBehaviour
         {
             return;
         }
-        if (UnityEngine.Input.GetKey(KeyCode.LeftShift) && !isReloading)
+        if (UnityEngine.Input.GetKey(KeyCode.LeftShift) && !isReloading && !isEating && !isHealing)
         {
             sprintSpeedPlayer = 2;
         } else
@@ -252,9 +259,9 @@ public class PlayerControl : MonoBehaviour
             spritePlayer.flipX = false;
         }
     }
-    private bool TouchFloor()
+    private bool TouchFloor(bool ignoreCoyoteTime)
     {
-        if (Time.time <= lastTimeGrounded + 0.3f) // Coyote Time
+        if (Time.time <= lastTimeGrounded + 0.3f && !ignoreCoyoteTime) // Coyote Time
         {
             return true;
         }
@@ -280,11 +287,11 @@ public class PlayerControl : MonoBehaviour
     }
     private bool isGrounded()
     {
-        return TouchFloor();
+        return TouchFloor(false);
     }
     public void HurtPlayer(int damage, int rad)
     {
-        if (isVulnerable)
+        if (isVulnerable && !isDead)
         {
             ReduceRadiationPlayer(rad);
             Debug.Log("PlayerHealth: "+health);
@@ -312,7 +319,49 @@ public class PlayerControl : MonoBehaviour
         isDead = true;
         rigPlayer.velocity = Vector3.zero;
         deathMenuCanvas.SetActive(true);
+        Invoke("Pause",0.001f);
+    }
+    private void SlowGame()
+    {
+        Time.timeScale = 0.2f;
+    }
+    public void HurtFallPlayer()
+    {
+        if (isDead)
+        {
+            return;
+        }
+        health--;
+        spritePlayer.color = Color.red;
+        if (health <= 0)
+        {
+            DeathPlayer();
+        }
+        else
+        {
+            //transform.position = startPos;
+            //transform.position = lastPos;
+            transform.position = new Vector3((int)lastGroundPoint.x,lastGroundPoint.y,0);
+            FreezePlayer();
+            Invoke("UnfreezePlayer", 0.2f);
+        }
+        Invoke("MakeVulnerable", 1.5f);
+    }
+    private void Pause()
+    {
         Time.timeScale = 0f;
+    }
+    private void FreezePlayer()
+    {
+        canMove = false;
+    }
+    private void UnfreezePlayer()
+    {
+        canMove = true;
+    }
+    private void ResumeGame()
+    {
+        Time.timeScale = 1;
     }
     private void ShootPlayer()
     {
@@ -320,7 +369,7 @@ public class PlayerControl : MonoBehaviour
         {
             return;
         }
-        if (TouchFloor() && UnityEngine.Input.GetKeyDown(KeyCode.Mouse0) && magazineAmmo>0 && Time.time > lastTimeShoot+0.3f && !isReloading)
+        if (TouchFloor(false) && UnityEngine.Input.GetKeyDown(KeyCode.Mouse0) && magazineAmmo>0 && Time.time > lastTimeShoot+0.3f && !isReloading)
         {
             // Force FrontShooting
             if (GetComponent<SpriteRenderer>().flipX && transform.position.x - Camera.main.ScreenToWorldPoint(Input.mousePosition).x < 0)
@@ -342,10 +391,13 @@ public class PlayerControl : MonoBehaviour
         {
             return;
         }
-        if (UnityEngine.Input.GetKeyDown(KeyCode.R) && magazineAmmo<maxMagAmmo && !isReloading && remainingAmmo>0 && TouchFloor())
+        if (UnityEngine.Input.GetKeyDown(KeyCode.R) && magazineAmmo<maxMagAmmo && !isReloading && remainingAmmo>0 && TouchFloor(false))
         {
             isReloading = true;
-            playerSpeed /= 2;
+            if (playerSpeed > playerSpeedOrig/2)
+            {
+                playerSpeed /= 2;
+            }
             ammoString = "??";
             Invoke("RefillGun",2.5f);
         }
@@ -353,7 +405,10 @@ public class PlayerControl : MonoBehaviour
     public void RefillGun(){
         int neededAmmo = maxMagAmmo-magazineAmmo;
         isReloading = false;
-        playerSpeed = playerSpeedOrig;
+        if (!isHealing && !isEating)
+        {
+            playerSpeed = playerSpeedOrig;
+        }
 
         if(remainingAmmo>=neededAmmo)
         {
@@ -429,34 +484,71 @@ public class PlayerControl : MonoBehaviour
     }
     public void EatFoodPlayer()
     {
+        if (isEating)
+        {
+            return;
+        }
         if (isPaused || isDead)
         {
             return;
         }
-        if (itemFood>0 && UnityEngine.Input.GetKeyDown(KeyCode.Q) && hunger<maxHunger)
+        if (itemFood>0 && UnityEngine.Input.GetKeyDown(KeyCode.Q) && hunger<maxHunger && TouchFloor(false))
         {
             itemFood--;
-            GiveFoodPlayer(25);
+            isEating = true;
+            if (playerSpeed > playerSpeedOrig / 2)
+            {
+                playerSpeed /= 2;
+            }
+            Invoke("StartEating", 1.5f);
         }
+    }
+    private void StartEating()
+    {
+        GiveFoodPlayer(25);
+        if (!isReloading && !isHealing)
+        {
+            playerSpeed = playerSpeedOrig;
+        }
+        isEating = false;
     }
     public void UseMedKitPlayer()
     {
+        if (isHealing)
+        {
+            return;
+        }
         if (isPaused || isDead)
         {
             return;
         }
-        if (itemMedkit>0 && UnityEngine.Input.GetKeyDown(KeyCode.F) && health<maxHealth)
+        if (itemMedkit>0 && UnityEngine.Input.GetKeyDown(KeyCode.F) && health<maxHealth && TouchFloor(false))
         {
             itemMedkit--;
-            HealPlayer(30);
+            isHealing = true;
+            if (playerSpeed > playerSpeedOrig / 2)
+            {
+                playerSpeed /= 2;
+            }
+            Invoke("StartHealing", 1.5f);
             //HealRadPlayer(15);
         }
+    }
+
+    private void StartHealing()
+    {
+        HealPlayer(30);
+        if (!isEating && !isReloading)
+        {
+            playerSpeed = playerSpeedOrig;
+        }
+        isHealing = false;
     }
     public void NextLevel()
     {
         Debug.Log("CurrrentLevel: " + currentLevel);
         SavePlayerPersistStats();
-        SceneManager.LoadScene("Level"+currentLevel);
+        SceneManager.LoadScene("Level" + currentLevel);
         currentLevel++;
     }
     private void HealPlayer(int healAmount)

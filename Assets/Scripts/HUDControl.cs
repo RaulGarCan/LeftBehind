@@ -57,13 +57,17 @@ public class HUDControl : MonoBehaviour
         if (!pauseMenuCanvas.activeSelf)
         {
             pauseMenuCanvas.SetActive(true);
-            Time.timeScale = 0;
+            Invoke("Pause", 0.001f);
         }
         else
         {
             Time.timeScale = 1f;
             pauseMenuCanvas.SetActive(false);
         }
+    }
+    private void Pause()
+    {
+        Time.timeScale = 0f;
     }
     public void ContinueGame()
     {
