@@ -2516,7 +2516,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccd6c366ee4d16c448b66cd4d052bba5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deathMenu: {fileID: 0}
+  deathMenuCanvas: {fileID: 0}
   bullet: {fileID: 6060308657992275431, guid: 1db880519d517704bb6bdf1b6cc53b1c, type: 3}
   HUD: {fileID: 1983383252557475226}
   thoughts: {fileID: 6217632491514685264}
@@ -2527,7 +2527,9 @@ MonoBehaviour:
   maxRadiation: 100
   maxAmmo: 25
   maxMagAmmo: 10
+  maxStamina: 250
   isTutorial: 0
+  lastGroundPoint: {x: 0, y: 0, z: 0}
 --- !u!61 &1656772086798141586
 BoxCollider2D:
   m_ObjectHideFlags: 0

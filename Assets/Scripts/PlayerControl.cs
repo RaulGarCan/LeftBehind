@@ -15,15 +15,15 @@ public class PlayerControl : MonoBehaviour
     private HUDControl hudControl;
     private MenuControl menuControl;
     public float playerJumpforce;
-    public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
+    public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo, maxStamina;
     private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer, currentLevel;
     private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking, isDead, isPaused, isEating, isHealing;
-    private float lastTimeShoot, lastTimeHunger, lastTimeRad, startTimeScene, lastTimeGrounded;
+    private float lastTimeShoot, lastTimeHunger, lastTimeRad, startTimeScene, lastTimeGrounded, stamina;
     private string ammoString;
     public bool isTutorial;
     private DifficultyControl difficultyControl;
     public Vector3 lastGroundPoint;
-    private bool canMove;
+    private bool canMove, canRun;
     private void Start()
     {
         startTimeScene = Time.time;
@@ -38,6 +38,7 @@ public class PlayerControl : MonoBehaviour
 
         Time.timeScale = 1f;
         canMove = true;
+        canRun = true;
         rigPlayer = GetComponent<Rigidbody2D>();
         spritePlayer = GetComponent<SpriteRenderer>();
         animPlayer = GetComponent<Animator>();
@@ -45,6 +46,7 @@ public class PlayerControl : MonoBehaviour
         hunger = maxHunger;
         radiation = maxRadiation;
         remainingAmmo = maxAmmo;
+        stamina = maxStamina;
         magazineAmmo = 0;
         isVulnerable = true;
         hudControl = HUD.GetComponent<HUDControl>();
@@ -179,9 +181,14 @@ public class PlayerControl : MonoBehaviour
     }
     private void FixedUpdate()
     {
+        Debug.Log("Stamina "+stamina);
         if (!isTutorial)
         {
             SprintPlayer();
+            if (sprintSpeedPlayer == 0 && stamina<maxStamina)
+            {
+                IncreaseStamina();
+            }
         }
         MovementPlayer();
     }
@@ -240,12 +247,44 @@ public class PlayerControl : MonoBehaviour
         {
             return;
         }
-        if (UnityEngine.Input.GetKey(KeyCode.LeftShift) && !isReloading && !isEating && !isHealing)
+        if (UnityEngine.Input.GetKey(KeyCode.LeftShift) && !isReloading && !isEating && !isHealing && canRun)
         {
             sprintSpeedPlayer = 2;
+            ReduceStamina();
         } else
         {
             sprintSpeedPlayer = 0;
+        }
+    }
+    private void ReduceStamina()
+    {
+        if (stamina > 0)
+        {
+            stamina -= 3f;
+        } else if (stamina <= 0)
+        {
+            canRun = false;
+            playerSpeed /= 2;
+            Invoke("RemoveSprintPenalty",2f);
+        }
+    }
+    private void RemoveSprintPenalty()
+    {
+        playerSpeed = playerSpeedOrig;
+    }
+
+    private void IncreaseStamina()
+    {
+        if (stamina+2>maxStamina)
+        {
+            stamina = maxStamina;
+        } else
+        {
+            stamina += 1f;
+        }
+        if (stamina==maxStamina)
+        {
+            canRun = true;
         }
     }
     private void FlipSpritePlayer()
@@ -372,10 +411,10 @@ public class PlayerControl : MonoBehaviour
         if (TouchFloor(false) && UnityEngine.Input.GetKeyDown(KeyCode.Mouse0) && magazineAmmo>0 && Time.time > lastTimeShoot+0.3f && !isReloading)
         {
             // Force FrontShooting
-            if (GetComponent<SpriteRenderer>().flipX && transform.position.x - Camera.main.ScreenToWorldPoint(Input.mousePosition).x < 0)
+            if (GetComponent<SpriteRenderer>().flipX && transform.position.x - Camera.main.ScreenToWorldPoint(Input.mousePosition).x < 1f)
             {
                 return;
-            } else if (!GetComponent<SpriteRenderer>().flipX && transform.position.x - Camera.main.ScreenToWorldPoint(Input.mousePosition).x > 0)
+            } else if (!GetComponent<SpriteRenderer>().flipX && transform.position.x - Camera.main.ScreenToWorldPoint(Input.mousePosition).x > -1f)
             {
                 return;
             }
@@ -383,6 +422,22 @@ public class PlayerControl : MonoBehaviour
             magazineAmmo--;
             lastTimeShoot = Time.time;
             ammoString = magazineAmmo.ToString();
+
+            GunRecoil();
+        }
+    }
+    private void GunRecoil()
+    {
+        if (rigPlayer.velocity.x>0.01f)
+        {
+            return;
+        }
+        if (!spritePlayer.flipX)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, new Vector3(transform.position.x - 0.1f, transform.position.y, 0f), Time.time * playerSpeed);
+        } else
+        {
+            transform.position = Vector3.MoveTowards(transform.position, new Vector3(transform.position.x + 0.1f, transform.position.y, 0f), Time.time * playerSpeed);
         }
     }
     private void ReloadGunPlayer()

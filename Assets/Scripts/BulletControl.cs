@@ -25,7 +25,14 @@ public class BulletControl : MonoBehaviour
         Vector3 rotation = transform.position - mousePos;
         float rot = Mathf.Atan2(rotation.x, rotation.y) * Mathf.Rad2Deg;
         Debug.Log("MouseRot"+ rot);
-        transform.rotation = Quaternion.Euler(0, 0, Mathf.Abs(rot) + 90);
+        if (!player.GetComponent<SpriteRenderer>().flipX)
+        {
+            transform.rotation = Quaternion.Euler(0, 0, Mathf.Abs(rot) + 90);
+        } else
+        {
+            rot -= 180;
+            transform.rotation = Quaternion.Euler(0, 0, Mathf.Abs(rot) - 90);
+        }
         rb.velocity = new Vector2(direction.x, direction.y).normalized * speed;
 
         Invoke("DestroyBullet", 5f);
