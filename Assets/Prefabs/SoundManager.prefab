@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4742175877671200938
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4825044345362111630}
+  - component: {fileID: 3142528195225660575}
+  m_Layer: 0
+  m_Name: SoundManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4825044345362111630
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4742175877671200938}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 609, y: 248, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3142528195225660575
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4742175877671200938}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a497e5d9ee5e51e41a829a64e28b7faa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buttonSound: {fileID: 8300000, guid: 72dfe25476bff5f438b77a6f6924eef9, type: 3}
+  blobSound: {fileID: 8300000, guid: bd3820a4e80ca9e45b76d2e5f9acc798, type: 3}
+  eatSound: {fileID: 8300000, guid: 654363e6f5c7be14ab87605f8b149ac0, type: 3}
+  healSound: {fileID: 8300000, guid: 418ff6405ef491348900b7822d4687d4, type: 3}
+  playerHurtSound: {fileID: 8300000, guid: c4fb2ed84ab32794fab5c21c4906d391, type: 3}
+  footstepsSound: {fileID: 8300000, guid: efd6d5d6c5f93ee47be584d545b483f7, type: 3}
+  jumpSound: {fileID: 8300000, guid: faa74890c66afa3478152b6a9dc8118f, type: 3}
+  landSound: {fileID: 8300000, guid: 670462bdb7f0d1a4a85fe1ba2a357224, type: 3}
+  shootSound: {fileID: 8300000, guid: 990bafaa3383bd441917b93a9ae4f7b1, type: 3}
+  reloadSound: {fileID: 8300000, guid: 3ae401e033cbf3a42ad494de308ead48, type: 3}
+  turretSound: {fileID: 8300000, guid: f0b19e20e3aed344496420d7dad63c86, type: 3}
+  mainMenuMusic: {fileID: 8300000, guid: 360fc92b2736a1342a4d1532cc6f64b1, type: 3}
+  tutorialMusic: {fileID: 8300000, guid: 78dec1723d6c63a46afd29c3b2793fcd, type: 3}
+  levelMusic: {fileID: 8300000, guid: 56ffa5d40c83abd42a909f8d24668331, type: 3}

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class HUDControl : MonoBehaviour
 {
-    public GameObject hungerHUD, healthHUD, ammoHUD, remAmmoHUD, radHUD, timerHUD, medkitHUD, foodHUD, scoreHUD, pauseMenuCanvas;
+    public GameObject hungerHUD, healthHUD, ammoHUD, remAmmoHUD, radHUD, timerHUD, medkitHUD, foodHUD, scoreHUD, pauseMenuCanvas, staminaHUD;
     private TMP_Text ammoText, remAmmoText, timerText, itemMedkitText, itemFoodText, scoreText;
     private void Start()
     {
@@ -51,6 +51,10 @@ public class HUDControl : MonoBehaviour
     public void SetScoreHUD(int score)
     {
         scoreText.text = score.ToString();
+    }
+    public void SetStaminaHUD(float stamina, float maxStamina)
+    {
+        staminaHUD.GetComponent<Image>().fillAmount = (float)stamina / maxStamina;
     }
     public void PauseMenu()
     {

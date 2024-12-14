@@ -4,64 +4,50 @@ using UnityEngine;
 
 public class SoundControl : MonoBehaviour
 {
-    public AudioSource audioSource;
-    private AudioClip buttonSound, blobSound, eatSound, healSound, playerHurtSound, footstepsSound, jumpSound, landSound, shootSound, reloadSound, turretSound;
-    private AudioClip mainMenuMusic, tutorialMusic, levelMusic;
+    public AudioClip buttonSound, blobSound, eatSound, healSound, playerHurtSound, footstepsSound, jumpSound, landSound, shootSound, reloadSound, turretSound;
 
-    public void PlayButtonSound()
+    public void PlayButtonSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(buttonSound);
     }
-    public void PlayBlobSound()
+    public void PlayBlobSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(blobSound);
     }
-    public void PlayEatSound()
+    public void PlayEatSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(eatSound);
     }
-    public void PlayHealSound()
+    public void PlayHealSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(healSound);
     }
-    public void PlayPlayerHurtSound()
+    public void PlayPlayerHurtSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(playerHurtSound);
     }
-    public void PlayFootstepsSound()
+    public void PlayFootstepsSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(footstepsSound);
     }
-    public void PlayJumpSound()
+    public void PlayJumpSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(jumpSound);
     }
-    public void PlayLandSound()
+    public void PlayLandSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(landSound);
     }
-    public void PlayShootSound()
+    public void PlayShootSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(shootSound);
     }
-    public void PlayTurretSound()
+    public void PlayTurretSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(turretSound);
     }
-    public void PlayReloadSound()
+    public void PlayReloadSound(AudioSource audioSource)
     {
         audioSource.PlayOneShot(reloadSound);
-    }
-    public void PlayMainMenuMusic()
-    {
-        audioSource.PlayOneShot(mainMenuMusic);
-    }
-    public void PlayTutorialMusic()
-    {
-        audioSource.PlayOneShot(mainMenuMusic);
-    }
-    public void PlayLevelMusic()
-    {
-        audioSource.PlayOneShot(mainMenuMusic);
     }
 }

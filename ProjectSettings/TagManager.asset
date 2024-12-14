@@ -8,6 +8,8 @@ TagManager:
   - Item
   - PlayerBullet
   - Blob
+  - MenuMusic
+  - LevelMusic
   layers:
   - Default
   - TransparentFX

@@ -31,11 +31,11 @@ public class DifficultyControl : MonoBehaviour
             switch (gameDifficulty)
             {
                 case GameDifficulty.easy:
-                    return new DifficultySettings(0.5f, 0.5f, 1.5f,0.5f);
+                    return new DifficultySettings(0.8f, 0.5f, 1.5f,0.5f);
                 case GameDifficulty.normal:
                     return new DifficultySettings(1f, 1f, 1f, 1f);
                 case GameDifficulty.hard:
-                    return new DifficultySettings(1.5f, 1.5f, 0.5f, 1.75f);
+                    return new DifficultySettings(2f, 1.5f, 0.5f, 1.75f);
                 default:
                     return null;
             }

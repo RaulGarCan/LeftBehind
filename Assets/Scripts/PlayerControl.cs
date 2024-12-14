@@ -11,21 +11,35 @@ public class PlayerControl : MonoBehaviour
     private Rigidbody2D rigPlayer;
     private SpriteRenderer spritePlayer;
     private Animator animPlayer;
-    public GameObject deathMenuCanvas, bullet, HUD, thoughts;
+    public GameObject deathMenuCanvas, bullet, HUD, thoughts, soundManager, backgroundMusic;
     private HUDControl hudControl;
     private MenuControl menuControl;
-    public float playerJumpforce;
-    public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo, maxStamina;
+    private AudioSource audioSource, footstepsAudioSource, landAudioSource;
+    private SoundControl soundControl;
+    public float playerJumpforce, maxStamina;
+    public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
     private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer, currentLevel;
-    private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking, isDead, isPaused, isEating, isHealing;
+    private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking, isDead, isPaused, isEating, isHealing, canMove, canRun, isFallingFast, isBusy;
     private float lastTimeShoot, lastTimeHunger, lastTimeRad, startTimeScene, lastTimeGrounded, stamina;
     private string ammoString;
     public bool isTutorial;
     private DifficultyControl difficultyControl;
     public Vector3 lastGroundPoint;
-    private bool canMove, canRun;
+    
+    [Header("Final Game Stats")]
+    public int itemsCollected, totalTime, ammoUsed, enemiesKilled, hitCount;
     private void Start()
     {
+        if (GameObject.FindGameObjectWithTag("MenuMusic") != null)
+        {
+            GameObject.FindGameObjectWithTag("MenuMusic").GetComponent<MenuMusicPersist>().StopMusic();
+        }
+
+        audioSource = GetComponents<AudioSource>()[0];
+        footstepsAudioSource = GetComponents<AudioSource>()[1];
+        landAudioSource = GetComponents<AudioSource>()[2];
+        soundControl = soundManager.GetComponent<SoundControl>();
+
         startTimeScene = Time.time;
 
         currentLevel = 1;
@@ -39,6 +53,7 @@ public class PlayerControl : MonoBehaviour
         Time.timeScale = 1f;
         canMove = true;
         canRun = true;
+        isFallingFast = false;
         rigPlayer = GetComponent<Rigidbody2D>();
         spritePlayer = GetComponent<SpriteRenderer>();
         animPlayer = GetComponent<Animator>();
@@ -59,6 +74,7 @@ public class PlayerControl : MonoBehaviour
         hungerMultiplier = 5;
         isHungry = true;
         isThinking = false;
+        isBusy = false;
         itemMedkit = 0;
         itemFood = 0;
         sprintSpeedPlayer = 0;
@@ -68,25 +84,36 @@ public class PlayerControl : MonoBehaviour
         {
             LoadTutorialStats();
         }
-        else if(currentLevel>1)
+        else if (currentLevel > 1)
         {
             LoadPlayerPersistStats();
         }
 
         RefillGun();
+        StartCoroutine(PlayFootstepsSound());
+        StartCoroutine(IsFallingFast());
+
         UpdateHUDInfo();
     }
     private void Update()
     {
-        if (Time.timeScale>0f)
+        if (isEating || isReloading || isHealing)
+        {
+            isBusy = true;
+        } else
+        {
+            isBusy = false;
+        }
+        if (Time.timeScale > 0f)
         {
             isPaused = false;
         }
         PauseGame();
-        if (!isTutorial) 
+        if (!isTutorial)
         {
             JumpPlayer();
         }
+
         ShootPlayer();
         ReloadGunPlayer();
         FlipSpritePlayer();
@@ -112,6 +139,10 @@ public class PlayerControl : MonoBehaviour
         UseMedKitPlayer();
         animPlayer.SetBool("isGrounded", isGrounded());
     }
+    private void DeathMenuMusic(){
+        backgroundMusic.GetComponent<AudioSource>().pitch = 0.5f;
+        backgroundMusic.GetComponent<AudioSource>().volume = 1f;
+    }
     private void PauseGame()
     {
         if (Input.GetKeyDown(KeyCode.Escape) && !deathMenuCanvas.activeSelf)
@@ -119,6 +150,32 @@ public class PlayerControl : MonoBehaviour
             isPaused = true;
             hudControl.PauseMenu();
         }
+    }
+    IEnumerator IsFallingFast()
+    {
+        while (true)
+        {
+            if (landAudioSource.isPlaying)
+            {
+                landAudioSource.Stop();
+            }
+            if (rigPlayer.velocity.y < -12)
+            {
+                isFallingFast = true;
+            }
+            if (isFallingFast && isGrounded())
+            {
+                Debug.Log("LandSound");
+                PlayLandSound();
+                yield return new WaitForSeconds(1f);
+            }
+            yield return new WaitForEndOfFrame();
+        }
+    }
+    private void PlayLandSound()
+    {
+        soundControl.PlayLandSound(audioSource);
+        isFallingFast = false;
     }
     private void ChangeThoughtsPlayer(string newThought)
     {
@@ -228,7 +285,23 @@ public class PlayerControl : MonoBehaviour
         }
         float inputX = UnityEngine.Input.GetAxis("Horizontal");
 
-        rigPlayer.velocity = new Vector2(inputX * (playerSpeed+sprintSpeedPlayer), rigPlayer.velocity.y);
+        rigPlayer.velocity = new Vector2(inputX * (playerSpeed + sprintSpeedPlayer), rigPlayer.velocity.y);
+    }
+    IEnumerator PlayFootstepsSound()
+    {
+        while (true)
+        {
+            Debug.Log("Looking for Steps...");
+            if (Math.Abs(rigPlayer.velocity.x) > 0.1f)
+            {
+                soundControl.PlayFootstepsSound(footstepsAudioSource);
+                yield return new WaitForSeconds(1f);
+            } else
+            {
+                footstepsAudioSource.Stop();
+                yield return new WaitForEndOfFrame();
+            }
+        }
     }
     private void JumpPlayer()
     {
@@ -239,6 +312,7 @@ public class PlayerControl : MonoBehaviour
         if (TouchFloor(false) && !isReloading && UnityEngine.Input.GetKeyDown(KeyCode.Space))
         {
             rigPlayer.AddForce(Vector2.up * playerJumpforce, ForceMode2D.Impulse);
+            soundControl.PlayJumpSound(audioSource);
         }
     }
     private void SprintPlayer()
@@ -260,12 +334,12 @@ public class PlayerControl : MonoBehaviour
     {
         if (stamina > 0)
         {
-            stamina -= 3f;
+            stamina -= 2f;
         } else if (stamina <= 0)
         {
             canRun = false;
-            playerSpeed /= 2;
-            Invoke("RemoveSprintPenalty",2f);
+            playerSpeed -= 1;
+            Invoke("RemoveSprintPenalty",1f);
         }
     }
     private void RemoveSprintPenalty()
@@ -275,14 +349,14 @@ public class PlayerControl : MonoBehaviour
 
     private void IncreaseStamina()
     {
-        if (stamina+2>maxStamina)
+        if (stamina+1>maxStamina)
         {
             stamina = maxStamina;
         } else
         {
             stamina += 1f;
         }
-        if (stamina==maxStamina)
+        if (stamina>=maxStamina/2)
         {
             canRun = true;
         }
@@ -326,7 +400,7 @@ public class PlayerControl : MonoBehaviour
     }
     private bool isGrounded()
     {
-        return TouchFloor(false);
+        return TouchFloor(true);
     }
     public void HurtPlayer(int damage, int rad)
     {
@@ -339,7 +413,13 @@ public class PlayerControl : MonoBehaviour
             Invoke("MakeVulnerable", 1.5f);
             if (health<=0)
             {
+                audioSource.GetComponent<AudioSource>().pitch = 0.5f;
+                audioSource.GetComponent<AudioSource>().volume = 1f;
+                soundControl.PlayPlayerHurtSound(audioSource);
                 DeathPlayer();
+            } else
+            {
+                soundControl.PlayPlayerHurtSound(audioSource);
             }
         }
     }
@@ -358,6 +438,7 @@ public class PlayerControl : MonoBehaviour
         isDead = true;
         rigPlayer.velocity = Vector3.zero;
         deathMenuCanvas.SetActive(true);
+        DeathMenuMusic();
         Invoke("Pause",0.001f);
     }
     private void SlowGame()
@@ -422,6 +503,7 @@ public class PlayerControl : MonoBehaviour
             magazineAmmo--;
             lastTimeShoot = Time.time;
             ammoString = magazineAmmo.ToString();
+            soundControl.PlayShootSound(audioSource);
 
             GunRecoil();
         }
@@ -442,11 +524,11 @@ public class PlayerControl : MonoBehaviour
     }
     private void ReloadGunPlayer()
     {
-        if (isPaused || isDead)
+        if (isPaused || isDead || isReloading || isBusy)
         {
             return;
         }
-        if (UnityEngine.Input.GetKeyDown(KeyCode.R) && magazineAmmo<maxMagAmmo && !isReloading && remainingAmmo>0 && TouchFloor(false))
+        if (UnityEngine.Input.GetKeyDown(KeyCode.R) && magazineAmmo<maxMagAmmo && remainingAmmo>0 && TouchFloor(false))
         {
             isReloading = true;
             if (playerSpeed > playerSpeedOrig/2)
@@ -454,6 +536,7 @@ public class PlayerControl : MonoBehaviour
                 playerSpeed /= 2;
             }
             ammoString = "??";
+            soundControl.PlayReloadSound(audioSource);
             Invoke("RefillGun",2.5f);
         }
     }
@@ -487,6 +570,7 @@ public class PlayerControl : MonoBehaviour
         hudControl.SetFoodHUD(itemFood);
         hudControl.SetMedkitHUD(itemMedkit);
         hudControl.SetScoreHUD(scorePlayer);
+        hudControl.SetStaminaHUD(stamina, maxStamina);
     }
     public void ReduceRadiationPlayer(int radAmount)
     {
@@ -539,7 +623,7 @@ public class PlayerControl : MonoBehaviour
     }
     public void EatFoodPlayer()
     {
-        if (isEating)
+        if (isEating || isBusy)
         {
             return;
         }
@@ -555,6 +639,7 @@ public class PlayerControl : MonoBehaviour
             {
                 playerSpeed /= 2;
             }
+            soundControl.PlayEatSound(audioSource);
             Invoke("StartEating", 1.5f);
         }
     }
@@ -569,7 +654,7 @@ public class PlayerControl : MonoBehaviour
     }
     public void UseMedKitPlayer()
     {
-        if (isHealing)
+        if (isHealing || isBusy)
         {
             return;
         }
@@ -585,6 +670,7 @@ public class PlayerControl : MonoBehaviour
             {
                 playerSpeed /= 2;
             }
+            soundControl.PlayHealSound(audioSource);
             Invoke("StartHealing", 1.5f);
             //HealRadPlayer(15);
         }
