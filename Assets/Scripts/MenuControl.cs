@@ -43,6 +43,14 @@ public class MenuControl : MonoBehaviour
         FadeAnimation();
         Invoke("LoadGame", 1f);
     }
+    public void Retry(string sceneName)
+    {
+        isFading = true;
+        Time.timeScale = 1f;
+        this.sceneName = sceneName;
+        FadeAnimation();
+        Invoke("LoadScene", 1f);
+    }
     public void SetDifficulty(string dificultyName)
     {
         switch (dificultyName.ToLower())

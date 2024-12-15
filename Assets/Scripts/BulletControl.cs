@@ -41,10 +41,6 @@ public class BulletControl : MonoBehaviour
     {
         Destroy(gameObject);
     }
-    private void MoveBullet()
-    {
-        transform.position = Vector3.MoveTowards(transform.position, endPos, speed * Time.deltaTime);
-    }
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.CompareTag("Blob"))
@@ -56,7 +52,7 @@ public class BulletControl : MonoBehaviour
             collision.gameObject.GetComponent<BlobControl>().HurtBlob();
             player.GetComponent<PlayerControl>().AddHitCount();
         }
-        if (!collision.CompareTag("Player") && !collision.CompareTag("Item"))
+        if (!collision.CompareTag("Player") && !collision.CompareTag("Item") && !collision.CompareTag("Void") && !collision.CompareTag("Turret") && !collision.CompareTag("Bullet"))
         {
             DestroyBullet();
         }

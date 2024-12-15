@@ -130,6 +130,9 @@ MonoBehaviour:
   maxHealth: 5
   speed: 1
   blobHealthBar: {fileID: 4004634749437916807}
+  foodItem: {fileID: 943719615863394924, guid: 1e4ceb2874187ec4a9da185784a036f2, type: 3}
+  ammoItem: {fileID: 2593190118422720702, guid: b33d506e40c0a544bbb9d3872e1225e7, type: 3}
+  medkitItem: {fileID: 8114799005677874816, guid: 174fa976054c48647bc2411bef58dc92, type: 3}
   isChasing: 0
 --- !u!114 &9112089828438032950
 MonoBehaviour:

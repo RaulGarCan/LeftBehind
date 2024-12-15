@@ -288,7 +288,7 @@ public class PlayerControl : MonoBehaviour
     }
     private void UpdateCurrentLevel()
     {
-        currentLevel = PlayerPrefs.GetInt("currentLevel");
+        currentLevel = PlayerPrefs.GetInt("currentLevel",1);
     }
     private void LoadPlayerPersistStats()
     {
@@ -565,10 +565,6 @@ public class PlayerControl : MonoBehaviour
         deathMenuCanvas.SetActive(true);
         DeathMenuMusic();
         Invoke("Pause",0.001f);
-    }
-    private void SlowGame()
-    {
-        Time.timeScale = 0.2f;
     }
     public void HurtFallPlayer()
     {

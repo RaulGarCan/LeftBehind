@@ -10,6 +10,9 @@ TagManager:
   - Blob
   - MenuMusic
   - LevelMusic
+  - Void
+  - Turret
+  - Bullet
   layers:
   - Default
   - TransparentFX

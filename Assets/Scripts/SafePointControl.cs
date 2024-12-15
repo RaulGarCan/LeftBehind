@@ -4,7 +4,11 @@ using UnityEngine;
 
 public class SafePointControl : MonoBehaviour
 {
-    public GameObject player;
+    private GameObject player;
+    private void Awake()
+    {
+        player = transform.parent.GetComponent<VoidControl>().player;
+    }
     private void OnTriggerStay2D(Collider2D collision)
     {
         if (collision.gameObject.CompareTag("Player"))
