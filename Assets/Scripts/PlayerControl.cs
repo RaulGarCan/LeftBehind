@@ -1,8 +1,7 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using TMPro;
-using Unity.VisualScripting;
+using Unity.Burst.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,18 +15,19 @@ public class PlayerControl : MonoBehaviour
     private MenuControl menuControl;
     private AudioSource audioSource, footstepsAudioSource, landAudioSource;
     private SoundControl soundControl;
-    public float playerJumpforce, maxStamina;
-    public int playerSpeed, maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
-    private int health, hunger, radiation, remainingAmmo, magazineAmmo, playerSpeedOrig, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer, currentLevel;
-    private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking, isDead, isPaused, isEating, isHealing, canMove, canRun, isFallingFast, isBusy;
-    private float lastTimeShoot, lastTimeHunger, lastTimeRad, startTimeScene, lastTimeGrounded, stamina;
+    public float playerJumpforce, maxStamina, playerSpeed;
+    public int maxHealth, maxHunger, maxRadiation, maxAmmo, maxMagAmmo;
+    private int health, hunger, radiation, remainingAmmo, magazineAmmo, hungerMultiplier, itemMedkit, itemFood, scorePlayer, sprintSpeedPlayer, currentLevel, fractureSpeedPenalty;
+    private bool isVulnerable, isReloading, isHungry, isRadiating, isThinking, isDead, isPaused, isEating, isHealing, canMove, canRun, isFallingFast, isBusy, isFractured, isBleeding;
+    private float lastTimeShoot, lastTimeHunger, lastTimeRad, startTimeScene, lastTimeGrounded, stamina, lastBleedTime, playerSpeedOrig;
     private string ammoString;
     public bool isTutorial;
     private DifficultyControl difficultyControl;
     public Vector3 lastGroundPoint;
     
     [Header("Final Game Stats")]
-    public int itemsCollected, totalTime, ammoUsed, enemiesKilled, hitCount;
+    public int itemsCollected, ammoUsed, enemiesKilled, hitCount;
+    public float totalTime;
     private void Start()
     {
         if (GameObject.FindGameObjectWithTag("MenuMusic") != null)
@@ -42,13 +42,17 @@ public class PlayerControl : MonoBehaviour
 
         startTimeScene = Time.time;
 
-        currentLevel = 1;
-
         isDead = false;
         isPaused = false;
 
         difficultyControl = GetComponent<DifficultyControl>();
         LoadDifficultySettings();
+
+        itemsCollected = 0;
+        totalTime = 0f;
+        ammoUsed = 0;
+        enemiesKilled = 0;
+        hitCount = 0;
 
         Time.timeScale = 1f;
         canMove = true;
@@ -75,10 +79,18 @@ public class PlayerControl : MonoBehaviour
         isHungry = true;
         isThinking = false;
         isBusy = false;
+        isFractured = false;
+        isBleeding = false;
         itemMedkit = 0;
         itemFood = 0;
         sprintSpeedPlayer = 0;
+        fractureSpeedPenalty = 1;
         menuControl = GetComponent<MenuControl>();
+
+        UpdateCurrentLevel();
+
+        Debug.Log(isTutorial);
+        Debug.Log(currentLevel);
 
         if (isTutorial)
         {
@@ -119,7 +131,6 @@ public class PlayerControl : MonoBehaviour
         FlipSpritePlayer();
         animPlayer.SetFloat("VelocityAbsX", Math.Abs(rigPlayer.velocity.x));
         animPlayer.SetFloat("VelocityY", rigPlayer.velocity.y);
-        UpdateHUDInfo();
         if (radiation <= 0 && Time.time > lastTimeRad + 3f)
         {
             lastTimeRad = Time.time;
@@ -138,6 +149,71 @@ public class PlayerControl : MonoBehaviour
         EatFoodPlayer();
         UseMedKitPlayer();
         animPlayer.SetBool("isGrounded", isGrounded());
+
+        FractureEffect();
+        BleedEffect();
+
+        UpdateHUDInfo();
+    }
+    private void BleedEffect()
+    {
+        if (isBleeding && Time.time>lastBleedTime+2f)
+        {
+            if (!isBleeding)
+            {
+                StopCoroutine(NaturalBleedHeal());
+            }
+            StartCoroutine(NaturalBleedHeal());
+            ReduceHealthPlayer();
+            hudControl.EnableBleed();
+            lastBleedTime = Time.time;
+        }
+    }
+    IEnumerator NaturalBleedHeal()
+    {
+        while (true)
+        {
+            int rand = UnityEngine.Random.Range(1,101);
+            if (rand<=1)
+            {
+                isBleeding = false;
+                hudControl.DisableBleed();
+            }
+            yield return new WaitForSeconds(10f);
+        }
+    }
+    public void BleedPlayer(int chancePercent)
+    {
+        if (chancePercent == 0)
+        {
+            return;
+        }
+        int rand = UnityEngine.Random.Range(1,101);
+        if (rand <= chancePercent)
+        {
+            isBleeding = true;
+        }
+    }
+    private void FractureEffect()
+    {
+        if (isFractured)
+        {
+            fractureSpeedPenalty = 2;
+            canRun = false;
+            hudControl.EnableFracture();
+        }
+    }
+    public void FracturePlayer(int chancePercent)
+    {
+        if (chancePercent==0)
+        {
+            return;
+        }
+        int rand = UnityEngine.Random.Range(1, 101);
+        if (rand <= chancePercent)
+        {
+            isFractured = true;
+        }
     }
     private void DeathMenuMusic(){
         backgroundMusic.GetComponent<AudioSource>().pitch = 0.5f;
@@ -210,6 +286,10 @@ public class PlayerControl : MonoBehaviour
             yield return new WaitForSeconds(0.02f);
         }
     }
+    private void UpdateCurrentLevel()
+    {
+        currentLevel = PlayerPrefs.GetInt("currentLevel");
+    }
     private void LoadPlayerPersistStats()
     {
         health = PlayerPrefs.GetInt("health");
@@ -220,9 +300,30 @@ public class PlayerControl : MonoBehaviour
         itemMedkit = PlayerPrefs.GetInt("itemMedkit");
         itemFood = PlayerPrefs.GetInt("itemFood");
         scorePlayer = PlayerPrefs.GetInt("scorePlayer");
+
+        int isBleedingInt = PlayerPrefs.GetInt("isBleeding");
+        int isFracturedInt = PlayerPrefs.GetInt("isFracture");
+        if (isBleedingInt == 1)
+        {
+            isBleeding = true;
+        }
+        if (isFracturedInt == 1)
+        {
+            isFractured = true;
+        }
+        
+        itemsCollected = PlayerPrefs.GetInt("itemsCollected");
+        ammoUsed = PlayerPrefs.GetInt("ammoUsed");
+        enemiesKilled = PlayerPrefs.GetInt("enemiesKilled");
+        hitCount = PlayerPrefs.GetInt("hitCount");
+        totalTime = PlayerPrefs.GetFloat("totalTime");
     }
     private void SavePlayerPersistStats()
-    { 
+    {
+        PlayerPrefs.SetInt("currentLevel", currentLevel);
+
+        totalTime += Time.time - startTimeScene;
+
         PlayerPrefs.SetInt("health", health);
         PlayerPrefs.SetInt("hunger", hunger);
         PlayerPrefs.SetInt("radiation", radiation);
@@ -231,6 +332,27 @@ public class PlayerControl : MonoBehaviour
         PlayerPrefs.SetInt("itemMedkit", itemMedkit);
         PlayerPrefs.SetInt("itemFood", itemFood);
         PlayerPrefs.SetInt("scorePlayer", scorePlayer);
+
+        int isBleedingInt = 0;
+        int isFracturedInt = 0;
+        if (isBleeding)
+        {
+            isBleedingInt = 1;
+        } 
+        if (isFractured) 
+        {
+            isFracturedInt = 1;
+        }
+        PlayerPrefs.SetInt("isBleeding", isBleedingInt);
+        PlayerPrefs.SetInt("isFracture", isFracturedInt);
+
+
+        PlayerPrefs.SetInt("itemsCollected", itemsCollected);
+        PlayerPrefs.SetInt("ammoUsed",ammoUsed);
+        PlayerPrefs.SetInt("enemiesKilled", enemiesKilled);
+        PlayerPrefs.SetInt("hitCount", hitCount);
+        PlayerPrefs.SetFloat("totalTime", totalTime);
+
     }
     private void LoadDifficultySettings()
     {
@@ -238,7 +360,7 @@ public class PlayerControl : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        Debug.Log("Stamina "+stamina);
+        //Debug.Log("Stamina "+stamina);
         if (!isTutorial)
         {
             SprintPlayer();
@@ -285,7 +407,7 @@ public class PlayerControl : MonoBehaviour
         }
         float inputX = UnityEngine.Input.GetAxis("Horizontal");
 
-        rigPlayer.velocity = new Vector2(inputX * (playerSpeed + sprintSpeedPlayer), rigPlayer.velocity.y);
+        rigPlayer.velocity = new Vector2(inputX * ((playerSpeed/fractureSpeedPenalty) + sprintSpeedPlayer), rigPlayer.velocity.y);
     }
     IEnumerator PlayFootstepsSound()
     {
@@ -321,7 +443,7 @@ public class PlayerControl : MonoBehaviour
         {
             return;
         }
-        if (UnityEngine.Input.GetKey(KeyCode.LeftShift) && !isReloading && !isEating && !isHealing && canRun)
+        if (UnityEngine.Input.GetKey(KeyCode.LeftShift) && !isReloading && !isEating && !isHealing && canRun && Math.Abs(rigPlayer.velocity.x) > 0.01f)
         {
             sprintSpeedPlayer = 2;
             ReduceStamina();
@@ -338,7 +460,7 @@ public class PlayerControl : MonoBehaviour
         } else if (stamina <= 0)
         {
             canRun = false;
-            playerSpeed -= 1;
+            playerSpeed *= 0.7f;
             Invoke("RemoveSprintPenalty",1f);
         }
     }
@@ -402,13 +524,16 @@ public class PlayerControl : MonoBehaviour
     {
         return TouchFloor(true);
     }
-    public void HurtPlayer(int damage, int rad)
+    public void HurtPlayer(int damage, int rad, int bleedChancePercent, int fractureChancePercent)
     {
         if (isVulnerable && !isDead)
         {
+            hitCount++;
             ReduceRadiationPlayer(rad);
             Debug.Log("PlayerHealth: "+health);
             health-=damage;
+            BleedPlayer(bleedChancePercent);
+            FracturePlayer(fractureChancePercent);
             MakeInvunerable();
             Invoke("MakeVulnerable", 1.5f);
             if (health<=0)
@@ -451,7 +576,8 @@ public class PlayerControl : MonoBehaviour
         {
             return;
         }
-        health--;
+        hitCount++;
+        health-=20;
         spritePlayer.color = Color.red;
         if (health <= 0)
         {
@@ -500,6 +626,7 @@ public class PlayerControl : MonoBehaviour
                 return;
             }
             Instantiate(bullet, transform);
+            ammoUsed++;
             magazineAmmo--;
             lastTimeShoot = Time.time;
             ammoString = magazineAmmo.ToString();
@@ -604,15 +731,23 @@ public class PlayerControl : MonoBehaviour
     public void PickupFoodCan(int addScore)
     {
         itemFood++;
+        itemsCollected++;
         scorePlayer += addScore;
     }
     public void PickupMedKit(int addScore)
     {
         itemMedkit++;
+        itemsCollected++;
         scorePlayer += addScore;
     }
     public void PickupAmmo(int addAmmo)
     {
+        itemsCollected++;
+        scorePlayer += addAmmo;
+        if (remainingAmmo==maxAmmo)
+        {
+            scorePlayer += addAmmo/2;
+        }
         if (remainingAmmo+addAmmo > maxAmmo)
         {
             remainingAmmo = maxAmmo;
@@ -685,12 +820,25 @@ public class PlayerControl : MonoBehaviour
         }
         isHealing = false;
     }
+    public void AddHitCount()
+    {
+        hitCount++;
+    }
+    public void AddEnemiesKilled()
+    {
+        enemiesKilled++;
+    }
     public void NextLevel()
     {
+        currentLevel++;
         Debug.Log("CurrrentLevel: " + currentLevel);
         SavePlayerPersistStats();
         SceneManager.LoadScene("Level" + currentLevel);
-        currentLevel++;
+    }
+    public void FinalLevel()
+    {
+        SavePlayerPersistStats();
+        SceneManager.LoadScene("LevelFinal");
     }
     private void HealPlayer(int healAmount)
     {
@@ -701,6 +849,12 @@ public class PlayerControl : MonoBehaviour
         {
             health += healAmount;
         }
+        isFractured = false;
+        isBleeding = false;
+        canRun = true;
+        hudControl.DisableBleed();
+        hudControl.DisableFracture();
+        fractureSpeedPenalty = 1;
     }
     private void HealRadPlayer(int radHealAmount)
     {

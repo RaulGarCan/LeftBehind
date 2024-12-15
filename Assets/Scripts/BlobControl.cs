@@ -75,7 +75,11 @@ public class BlobControl : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Player"))
         {
-            collision.gameObject.GetComponent<PlayerControl>().HurtPlayer(damage, radAmount);
+            collision.gameObject.GetComponent<PlayerControl>().HurtPlayer(damage, radAmount, 30, 0);
         }
+    }
+    public int GetHealth()
+    {
+        return health;
     }
 }

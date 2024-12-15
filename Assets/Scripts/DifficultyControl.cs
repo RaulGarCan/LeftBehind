@@ -7,6 +7,8 @@ public class DifficultyControl : MonoBehaviour
 {
     public void StoreDifficultyData(GameDifficulty gameDifficulty)
     {
+        PlayerPrefs.DeleteAll();
+
         DifficultySettings difficultySettings = DifficultySettings.SetDifficultySettings(gameDifficulty);
         PlayerPrefs.SetFloat("difficultyEnemyDamage", difficultySettings.enemyDamageMultiplier);
         PlayerPrefs.SetFloat("difficultyEnemyHealth", difficultySettings.enemyHealthMultiplier);

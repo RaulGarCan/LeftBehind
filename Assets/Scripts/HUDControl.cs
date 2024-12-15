@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class HUDControl : MonoBehaviour
 {
-    public GameObject hungerHUD, healthHUD, ammoHUD, remAmmoHUD, radHUD, timerHUD, medkitHUD, foodHUD, scoreHUD, pauseMenuCanvas, staminaHUD;
+    public GameObject hungerHUD, healthHUD, ammoHUD, remAmmoHUD, radHUD, timerHUD, medkitHUD, foodHUD, scoreHUD, pauseMenuCanvas, staminaHUD, bleedIcon, fractureIcon;
     private TMP_Text ammoText, remAmmoText, timerText, itemMedkitText, itemFoodText, scoreText;
     private void Start()
     {
@@ -77,5 +77,21 @@ public class HUDControl : MonoBehaviour
     {
         Time.timeScale = 1f;
         pauseMenuCanvas.SetActive(false);
+    }
+    public void EnableBleed()
+    {
+        bleedIcon.SetActive(true);
+    }
+    public void DisableBleed()
+    {
+        bleedIcon.SetActive(false);
+    }
+    public void EnableFracture()
+    {
+        fractureIcon.SetActive(true);
+    }
+    public void DisableFracture()
+    {
+        fractureIcon.SetActive(false);
     }
 }

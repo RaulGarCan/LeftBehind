@@ -49,7 +49,12 @@ public class BulletControl : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Blob"))
         {
+            if (collision.gameObject.GetComponent<BlobControl>().GetHealth() == 1)
+            {
+                player.GetComponent<PlayerControl>().AddEnemiesKilled();
+            }
             collision.gameObject.GetComponent<BlobControl>().HurtBlob();
+            player.GetComponent<PlayerControl>().AddHitCount();
         }
         if (!collision.CompareTag("Player") && !collision.CompareTag("Item"))
         {
